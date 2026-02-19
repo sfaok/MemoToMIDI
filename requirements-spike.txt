@@ -1,0 +1,9 @@
+# Use Python 3.10/3.11 for compatibility with Basic Pitch.
+basic-pitch[tf]
+coremltools
+librosa
+numpy
+onnxruntime
+pretty_midi
+scipy
+soundfile

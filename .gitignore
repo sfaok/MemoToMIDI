@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.tmp/
+
+cqt_spike/*.npy
+cqt_spike/*.npz
+cqt_spike/*.json
+cqt_spike/*.wav
+cqt_spike/*.mid
+cqt_spike/*.mlmodel
+cqt_spike/*.mlpackage
+cqt_spike/*.csv
