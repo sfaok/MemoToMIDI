@@ -10,6 +10,7 @@ struct RecordingView: View {
     @State private var isRunningInference = false
     @State private var inferenceProgress: Double = 0
     @State private var didAttemptWarmUp = false
+    @State private var processingRequestID: Int = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -115,6 +116,15 @@ struct RecordingView: View {
             }
             await warmUpModelIfNeeded()
         }
+        .task(id: processingRequestID) {
+            guard processingRequestID > 0 else { return }
+            await runInferenceForLastRecording()
+        }
+        .onChange(of: audioRecorder.isRecording) { wasRecording, isRecording in
+            guard wasRecording, !isRecording else { return }
+            refreshLastFileDescription()
+            processingRequestID += 1
+        }
     }
 
     private var statusText: String {
@@ -139,10 +149,6 @@ struct RecordingView: View {
     private func handleRecordButton() {
         if audioRecorder.isRecording {
             audioRecorder.stopRecording()
-            refreshLastFileDescription()
-            Task {
-                await runInferenceForLastRecording()
-            }
             return
         }
 
@@ -287,6 +293,29 @@ struct RecordingView: View {
         let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
         print("Extracted \(notes.count) notes:")
+
+        // Tuning detection test
+        let tuning = TuningDetector.detect(from: result)
+        print("Tuning: \(String(format: "%.1f", tuning.centsOffset)) cents")
+        print("Reference: A=\(String(format: "%.1f", tuning.referenceFrequency)) Hz")
+        print("Confidence: \(String(format: "%.2f", tuning.confidence))")
+
+        // Correction test
+        let corrected = PitchCorrector.correct(result: result, centsOffset: tuning.centsOffset)
+        let notesCorrected = NoteExtractor.extract(from: corrected)
+        print("Without correction: \(notes.count) notes")
+        print("With correction: \(notesCorrected.count) notes")
+        for n in notesCorrected {
+            let correctedName = noteNames[Int(n.pitch) % 12]
+            let correctedOctave = (Int(n.pitch) / 12) - 1
+            print(
+                "  \(correctedName)\(correctedOctave) (MIDI \(n.pitch)): " +
+                "start=\(String(format: "%.3f", n.startTime))s " +
+                "dur=\(String(format: "%.3f", n.duration))s " +
+                "vel=\(n.velocity)"
+            )
+        }
+
         for note in notes {
             let name = noteNames[Int(note.pitch) % 12]
             let octave = (Int(note.pitch) / 12) - 1
