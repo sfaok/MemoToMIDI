@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "source_model_path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/.venv/lib/python3.9/site-packages/basic_pitch/saved_models/icassp_2022/nmp",
+  "parameters": {
+    "sample_rate_hz": 22050,
+    "hop_length_samples": 256,
+    "fmin_hz": 27.5,
+    "bins_per_octave": 36,
+    "n_harmonics": 8,
+    "harmonics": [
+      0.5,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "n_semitones_cqt": 103,
+    "n_cqt_bins": 309,
+    "n_output_freq_bins": 264,
+    "n_octaves": 9,
+    "n_filters_top_octave": 36,
+    "n_fft_top_octave": 256,
+    "Q": 51.43862596945148,
+    "early_downsample_enabled": false,
+    "early_downsample_factor": 1,
+    "sr_for_kernels_hz": 22050.0,
+    "hop_for_cqt": 256,
+    "harmonic_shifts_bins": [
+      -36,
+      0,
+      36,
+      57,
+      72,
+      84,
+      93,
+      101
+    ]
+  },
+  "batchnorm_preprocess": {
+    "gamma": 0.48823851346969604,
+    "beta": 0.3687160313129425,
+    "moving_mean": 0.5021218657493591,
+    "moving_variance": 0.03773479163646698,
+    "epsilon": 0.001,
+    "fused_scale": 2.4807409894987282,
+    "fused_bias": -0.8769182627750702
+  },
+  "files": {
+    "cqt_top_octave_kernel_real_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/cqt_top_octave_kernel_real_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        36,
+        256
+      ],
+      "layout": "C",
+      "num_values": 9216,
+      "num_bytes": 36864
+    },
+    "cqt_top_octave_kernel_imag_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/cqt_top_octave_kernel_imag_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        36,
+        256
+      ],
+      "layout": "C",
+      "num_values": 9216,
+      "num_bytes": 36864
+    },
+    "cqt_lowpass_filter_256_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/cqt_lowpass_filter_256_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        256
+      ],
+      "layout": "C",
+      "num_values": 256,
+      "num_bytes": 1024
+    },
+    "cqt_librosa_norm_sqrt_lengths_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/cqt_librosa_norm_sqrt_lengths_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        309
+      ],
+      "layout": "C",
+      "num_values": 309,
+      "num_bytes": 1236
+    },
+    "harmonic_shifts_i32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/harmonic_shifts_i32le.bin",
+      "dtype": "int32",
+      "byte_order": "little_endian",
+      "shape": [
+        8
+      ],
+      "layout": "C",
+      "num_values": 8,
+      "num_bytes": 32
+    },
+    "harmonic_source_index_i32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/harmonic_source_index_i32le.bin",
+      "dtype": "int32",
+      "byte_order": "little_endian",
+      "shape": [
+        8,
+        264
+      ],
+      "layout": "C",
+      "num_values": 2112,
+      "num_bytes": 8448
+    },
+    "harmonic_source_mask_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/harmonic_source_mask_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        8,
+        264
+      ],
+      "layout": "C",
+      "num_values": 2112,
+      "num_bytes": 8448
+    },
+    "preprocess_batchnorm_fused_scale_bias_f32le.bin": {
+      "path": "/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/cqt_spike/precomputed/preprocess_batchnorm_fused_scale_bias_f32le.bin",
+      "dtype": "float32",
+      "byte_order": "little_endian",
+      "shape": [
+        2
+      ],
+      "layout": "C",
+      "num_values": 2,
+      "num_bytes": 8
+    }
+  }
+}

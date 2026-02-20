@@ -1,26 +1,29 @@
-# Step 2 Report: Reference Capture + CoreML Conversion Attempt
+# Step 2 Report: Reference Capture + CoreML Conversion/Runtime Comparison
 
 ## Run Date
 - February 19, 2026
 
 ## Environment Used
-- OS: Windows
-- Python: 3.11.9
-- Virtual env: `c:\Users\email\MemoToMIDI\.venv`
+- OS: macOS (Darwin 22, x86_64)
+- Python: 3.9.6
+- Virtual env: `/Users/jamesrobertson/MemoToMIDI/MemoToMIDI/.venv`
 - Dependencies: `pip install -r requirements-spike.txt`
 
 ## Commands Executed
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements-spike.txt
-.\.venv\Scripts\python.exe scripts\step2_capture_reference.py
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements-spike.txt
+git clone https://github.com/spotify/basic-pitch .tmp/basic-pitch
+python scripts/step2_capture_reference.py
 ```
 
 ## Step 2 Result
-- Status: PARTIAL
+- Status: COMPLETE
 - Reference capture: SUCCESS
-- CoreML conversion + numeric runtime comparison: BLOCKED ON WINDOWS
+- CoreML conversion (TF SavedModel): SUCCESS
+- CoreML runtime prediction compare (macOS): SUCCESS
 
 ## Artifacts Generated
 - `cqt_spike/report.md`
@@ -37,32 +40,17 @@ py -3.11 -m venv .venv
 - `cqt_spike/reference_output.mid`
 - `cqt_spike/reference_note_events.json`
 - `cqt_spike/synthetic_g_major.wav`
+- `cqt_spike/BasicPitch_from_tf.mlpackage`
 
-## CoreML Findings on Windows
-- `scripts/step2_capture_reference.py` conversion attempts:
-  - TF SavedModel -> failed with `RuntimeError('BlobWriter not loaded')`
-  - TFLite -> failed with source framework detection error
-- Additional probe:
-  - TF SavedModel converted successfully to `.mlmodel` when forcing `convert_to='neuralnetwork'`
-  - Output file: `cqt_spike/BasicPitch_from_tf.mlmodel`
-- Runtime comparison is still blocked on Windows:
-  - `coremltools.models.MLModel.predict(...)` raises macOS-only runtime error
-
-## Handoff for macOS
-Run on Mac to complete conversion validation and numeric diff:
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements-spike.txt
-python scripts/step2_capture_reference.py --audio cqt_spike/synthetic_g_major.wav
-```
-
-Then inspect:
-- `cqt_spike/conversion_report.json`
-- `cqt_spike/report.md`
+## CoreML Findings on macOS
+- TF SavedModel -> CoreML conversion succeeded.
+- Runtime compare completed via `mlmodel.predict(...)`.
+- Max absolute diff vs TensorFlow batched window outputs:
+  - `note`: `0.12656021118164062`
+  - `onset`: `0.13552778959274292`
+  - `contour`: `0.2006065547466278`
+- TFLite conversion still failed with source-framework detection error in `coremltools`.
 
 ## Gate
 - Step 2 Gate: YELLOW
-- Reason: reference tensors are captured and reproducible; CoreML runtime equivalence check must be finished on macOS.
+- Reason: pipeline now runs end-to-end on macOS and runtime comparison is unblocked, but output drift is non-trivial and needs acceptance thresholds / follow-up validation.

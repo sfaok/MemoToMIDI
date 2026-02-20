@@ -1,0 +1,467 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2AB156342F47F663004007B1 /* MemoToMIDIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156332F47F663004007B1 /* MemoToMIDIApp.swift */; };
+		2AB156362F47F663004007B1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156352F47F663004007B1 /* ContentView.swift */; };
+		2AB156382F47F666004007B1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AB156372F47F666004007B1 /* Assets.xcassets */; };
+		2AB1563B2F47F666004007B1 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AB1563A2F47F666004007B1 /* Preview Assets.xcassets */; };
+		2AB156422F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156412F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage */; };
+		2AB156522F4808A1004007B1 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156572F4808D2004007B1 /* Constants.swift */; };
+		2AB156532F4808AB004007B1 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156582F4808D7004007B1 /* AudioRecorder.swift */; };
+		2AB156542F4808B0004007B1 /* AudioFileReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156592F4808DD004007B1 /* AudioFileReader.swift */; };
+		2AB156552F4808B7004007B1 /* RecordingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565A2F4808E6004007B1 /* RecordingView.swift */; };
+		2AB156562F4808BF004007B1 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565B2F4808EA004007B1 /* WaveformView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2AB156302F47F663004007B1 /* MemoToMIDI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MemoToMIDI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2AB156332F47F663004007B1 /* MemoToMIDIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoToMIDIApp.swift; sourceTree = "<group>"; };
+		2AB156352F47F663004007B1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2AB156372F47F666004007B1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2AB1563A2F47F666004007B1 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2AB156412F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; name = BasicPitch_from_tf.mlpackage; path = ../../../BasicPitch_from_tf.mlpackage; sourceTree = "<group>"; };
+		2AB156432F47F76C004007B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2AB156572F4808D2004007B1 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		2AB156582F4808D7004007B1 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		2AB156592F4808DD004007B1 /* AudioFileReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFileReader.swift; sourceTree = "<group>"; };
+		2AB1565A2F4808E6004007B1 /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
+		2AB1565B2F4808EA004007B1 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2AB1562D2F47F663004007B1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2AB156272F47F663004007B1 = {
+			isa = PBXGroup;
+			children = (
+				2AB1564E2F4803E1004007B1 /* Resources */,
+				2AB1564C2F4803CE004007B1 /* Views */,
+				2AB1564B2F4803C6004007B1 /* Storage */,
+				2AB1564A2F4803B9004007B1 /* Analysis */,
+				2AB156492F4803B0004007B1 /* MIDI */,
+				2AB156482F4803A4004007B1 /* Processing */,
+				2AB156472F480399004007B1 /* ML */,
+				2AB156462F480391004007B1 /* Audio */,
+				2AB156452F480384004007B1 /* Models */,
+				2AB156322F47F663004007B1 /* MemoToMIDI */,
+				2AB156312F47F663004007B1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2AB156312F47F663004007B1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2AB156302F47F663004007B1 /* MemoToMIDI.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2AB156322F47F663004007B1 /* MemoToMIDI */ = {
+			isa = PBXGroup;
+			children = (
+				2AB156432F47F76C004007B1 /* Info.plist */,
+				2AB156332F47F663004007B1 /* MemoToMIDIApp.swift */,
+				2AB156352F47F663004007B1 /* ContentView.swift */,
+				2AB156372F47F666004007B1 /* Assets.xcassets */,
+				2AB156392F47F666004007B1 /* Preview Content */,
+			);
+			path = MemoToMIDI;
+			sourceTree = "<group>";
+		};
+		2AB156392F47F666004007B1 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				2AB156412F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage */,
+				2AB1563A2F47F666004007B1 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		2AB156452F480384004007B1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2AB156572F4808D2004007B1 /* Constants.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		2AB156462F480391004007B1 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				2AB156582F4808D7004007B1 /* AudioRecorder.swift */,
+				2AB156592F4808DD004007B1 /* AudioFileReader.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		2AB156472F480399004007B1 /* ML */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ML;
+			sourceTree = "<group>";
+		};
+		2AB156482F4803A4004007B1 /* Processing */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Processing;
+			sourceTree = "<group>";
+		};
+		2AB156492F4803B0004007B1 /* MIDI */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = MIDI;
+			sourceTree = "<group>";
+		};
+		2AB1564A2F4803B9004007B1 /* Analysis */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Analysis;
+			sourceTree = "<group>";
+		};
+		2AB1564B2F4803C6004007B1 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		2AB1564C2F4803CE004007B1 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				2AB1565A2F4808E6004007B1 /* RecordingView.swift */,
+				2AB1565B2F4808EA004007B1 /* WaveformView.swift */,
+				2AB1564D2F4803D8004007B1 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		2AB1564D2F4803D8004007B1 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		2AB1564E2F4803E1004007B1 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2AB1564F2F4803E7004007B1 /* Sounds */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		2AB1564F2F4803E7004007B1 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2AB1562F2F47F663004007B1 /* MemoToMIDI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2AB1563E2F47F666004007B1 /* Build configuration list for PBXNativeTarget "MemoToMIDI" */;
+			buildPhases = (
+				2AB1562C2F47F663004007B1 /* Sources */,
+				2AB1562D2F47F663004007B1 /* Frameworks */,
+				2AB1562E2F47F663004007B1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MemoToMIDI;
+			productName = MemoToMIDI;
+			productReference = 2AB156302F47F663004007B1 /* MemoToMIDI.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2AB156282F47F663004007B1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					2AB1562F2F47F663004007B1 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+				};
+			};
+			buildConfigurationList = 2AB1562B2F47F663004007B1 /* Build configuration list for PBXProject "MemoToMIDI" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2AB156272F47F663004007B1;
+			productRefGroup = 2AB156312F47F663004007B1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2AB1562F2F47F663004007B1 /* MemoToMIDI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2AB1562E2F47F663004007B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AB1563B2F47F666004007B1 /* Preview Assets.xcassets in Resources */,
+				2AB156382F47F666004007B1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2AB1562C2F47F663004007B1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AB156562F4808BF004007B1 /* WaveformView.swift in Sources */,
+				2AB156552F4808B7004007B1 /* RecordingView.swift in Sources */,
+				2AB156542F4808B0004007B1 /* AudioFileReader.swift in Sources */,
+				2AB156532F4808AB004007B1 /* AudioRecorder.swift in Sources */,
+				2AB156522F4808A1004007B1 /* Constants.swift in Sources */,
+				2AB156422F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage in Sources */,
+				2AB156362F47F663004007B1 /* ContentView.swift in Sources */,
+				2AB156342F47F663004007B1 /* MemoToMIDIApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2AB1563C2F47F666004007B1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2AB1563D2F47F666004007B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2AB1563F2F47F666004007B1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MemoToMIDI/Preview Content\"";
+				DEVELOPMENT_TEAM = 8V5ZAM3VPD;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MemoToMIDI/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"MemoToMIDI needs microphone access to record your musical ideas.\"";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sfaok.MemoToMIDI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2AB156402F47F666004007B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MemoToMIDI/Preview Content\"";
+				DEVELOPMENT_TEAM = 8V5ZAM3VPD;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MemoToMIDI/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"MemoToMIDI needs microphone access to record your musical ideas.\"";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sfaok.MemoToMIDI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2AB1562B2F47F663004007B1 /* Build configuration list for PBXProject "MemoToMIDI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AB1563C2F47F666004007B1 /* Debug */,
+				2AB1563D2F47F666004007B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2AB1563E2F47F666004007B1 /* Build configuration list for PBXNativeTarget "MemoToMIDI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AB1563F2F47F666004007B1 /* Debug */,
+				2AB156402F47F666004007B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2AB156282F47F663004007B1 /* Project object */;
+}
