@@ -40,15 +40,25 @@ Last updated: 2026-02-20
 
 ---
 
-## Phase 2: ML Inference Pipeline ⬜ NOT STARTED
+## Phase 2: ML Inference Pipeline ✅ COMPLETE
 
-**Will produce:**
+**Completed:**
 - `ML/BasicPitchInference.swift`
-  - Public API: `func process(audioBuffer: [Float]) async throws -> (note: [[Float]], onset: [[Float]])`
-  - Handles windowing, CoreML calls, and output stitching
-- Cached note + onset matrices stored for downstream re-use
+  - `process(audioSamples:progressCallback:) async throws -> InferenceResult`
+  - `warmUp() async throws` for one-time model warm-up
+  - Windowing: prepend 3840 zeros, 43844 sample windows, 36164 sample hop, final zero-padding
+  - CoreML inference per window using generated model API (`input_2`, `Identity_1`, `Identity_2`)
+  - Overlap stitch: trim half-overlap per side and concatenate (no overlap averaging)
+  - Final trim to real-audio frame count based on model hop size (256 samples/frame)
+- `Audio/AudioFileReader.swift`
+  - Added `readSamples(from:)` for Phase 2 call sites
+- `Views/RecordingView.swift`
+  - Auto-runs inference after recording stops
+  - Progress indicator during processing
+  - Temporary console diagnostics (shapes, frame duration, top activations)
+  - Caches inference matrices in view state for downstream reuse
 
-**Depends on:** Phase 1 (`AudioFileReader.readMonoFloat32()` to get `[Float]` buffer)
+**Depends on:** Phase 1 (`AudioFileReader.readSamples()` / `readMonoFloat32()` to get `[Float]` buffer)
 
 ---
 
@@ -139,7 +149,15 @@ Actual:  func requestMicrophoneAccess() async -> Bool
 ### BasicPitchInference (Phase 2)
 ```
 Planned: func process(audioBuffer: [Float]) async throws -> (note: [[Float]], onset: [[Float]])
-Actual:  [pending]
+Actual:  struct InferenceResult {
+             let noteActivations: [[Float]]
+             let onsetActivations: [[Float]]
+             let frameDuration: Double
+         }
+         final class BasicPitchInference {
+             func warmUp() async throws
+             func process(audioSamples: [Float], progressCallback: ((Double) -> Void)? = nil) async throws -> InferenceResult
+         }
 ```
 
 ### NoteExtractor (Phase 3)

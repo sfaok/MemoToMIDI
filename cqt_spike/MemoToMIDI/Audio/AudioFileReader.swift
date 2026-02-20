@@ -85,4 +85,8 @@ enum AudioFileReader {
 
         return Array(UnsafeBufferPointer(start: outputData, count: Int(outputBuffer.frameLength)))
     }
+
+    static func readSamples(from url: URL) throws -> [Float] {
+        try readMonoFloat32(from: url, targetSampleRate: AudioConstants.sampleRate)
+    }
 }

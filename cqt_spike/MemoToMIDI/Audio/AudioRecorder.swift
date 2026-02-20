@@ -18,15 +18,14 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var player: AVAudioPlayer?
 
     func requestMicrophoneAccess() async -> Bool {
-        let session = AVAudioSession.sharedInstance()
-        switch session.recordPermission {
+        switch AVAudioApplication.shared.recordPermission {
         case .granted:
             return true
         case .denied:
             return false
         case .undetermined:
             return await withCheckedContinuation { continuation in
-                session.requestRecordPermission { granted in
+                AVAudioApplication.requestRecordPermission { granted in
                     continuation.resume(returning: granted)
                 }
             }
@@ -37,7 +36,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
     func startRecording() throws {
         guard !isRecording else { return }
-        guard AVAudioSession.sharedInstance().recordPermission == .granted else {
+        guard AVAudioApplication.shared.recordPermission == .granted else {
             throw AudioRecorderError.microphonePermissionDenied
         }
 
