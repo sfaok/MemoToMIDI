@@ -6,6 +6,8 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published private(set) var isPlaying = false
     @Published private(set) var lastRecordingURL: URL?
     @Published private(set) var recordingDuration: TimeInterval = 0
+    @Published private(set) var currentPlaybackTime: Double = 0
+    @Published private(set) var playbackDuration: Double = 0
     @Published private(set) var waveformSamples: [Float] = []
     @Published var errorMessage: String?
 
@@ -16,6 +18,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var destinationFormat: AVAudioFormat?
     private var writtenFrameCount: Int64 = 0
     private var player: AVAudioPlayer?
+    private var playbackTimer: Timer?
 
     func requestMicrophoneAccess() async -> Bool {
         switch AVAudioApplication.shared.recordPermission {
@@ -110,33 +113,78 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
             throw AudioRecorderError.missingRecording
         }
 
-        stopPlayback()
         try configureSession()
 
-        let player = try AVAudioPlayer(contentsOf: url)
-        player.delegate = self
-        player.prepareToPlay()
+        let player: AVAudioPlayer
+        if let existingPlayer = self.player {
+            player = existingPlayer
+        } else {
+            let createdPlayer = try AVAudioPlayer(contentsOf: url)
+            createdPlayer.delegate = self
+            createdPlayer.prepareToPlay()
+            self.player = createdPlayer
+            player = createdPlayer
+            DispatchQueue.main.async {
+                self.playbackDuration = createdPlayer.duration
+            }
+        }
+
+        if player.currentTime >= player.duration {
+            player.currentTime = 0
+        }
+
         guard player.play() else {
             throw AudioRecorderError.playbackFailed
         }
-        self.player = player
+
+        startPlaybackTimer()
         DispatchQueue.main.async {
             self.isPlaying = true
+            self.currentPlaybackTime = player.currentTime
+        }
+    }
+
+    func pausePlayback() {
+        guard let player, player.isPlaying else { return }
+        player.pause()
+        stopPlaybackTimer()
+        DispatchQueue.main.async {
+            self.isPlaying = false
+            self.currentPlaybackTime = player.currentTime
         }
     }
 
     func stopPlayback() {
-        guard let player else { return }
+        stopPlaybackTimer()
+
+        guard let player else {
+            DispatchQueue.main.async {
+                self.isPlaying = false
+                self.currentPlaybackTime = 0
+                self.playbackDuration = 0
+            }
+            return
+        }
+
         player.stop()
+        player.currentTime = 0
         self.player = nil
         DispatchQueue.main.async {
             self.isPlaying = false
+            self.currentPlaybackTime = 0
+            self.playbackDuration = 0
         }
     }
 
+    func playbackTimeSnapshot() -> Double {
+        player?.currentTime ?? currentPlaybackTime
+    }
+
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        stopPlaybackTimer()
         DispatchQueue.main.async {
             self.isPlaying = false
+            self.currentPlaybackTime = player.currentTime
         }
     }
 
@@ -164,6 +212,23 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
         try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
         try session.setPreferredSampleRate(AudioConstants.sampleRate)
         try session.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    private func startPlaybackTimer() {
+        stopPlaybackTimer()
+        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            guard let self, let player else { return }
+            DispatchQueue.main.async {
+                self.currentPlaybackTime = player.currentTime
+            }
+        }
+        playbackTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func stopPlaybackTimer() {
+        playbackTimer?.invalidate()
+        playbackTimer = nil
     }
 
     private func handleInputBuffer(_ buffer: AVAudioPCMBuffer) {

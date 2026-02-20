@@ -118,7 +118,8 @@ struct RecordingView: View {
                             EditorView(
                                 inferenceResult: cachedInferenceResult,
                                 tuningResult: tuningResult,
-                                audioBuffer: cachedAudioBuffer
+                                audioBuffer: cachedAudioBuffer,
+                                audioRecorder: audioRecorder
                             )
                         } label: {
                             Label("View Notes", systemImage: "pianokeys")

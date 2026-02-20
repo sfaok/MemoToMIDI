@@ -5,6 +5,7 @@ struct EditorView: View {
     let tuningResult: TuningResult
     let audioBuffer: [Float]
 
+    @ObservedObject private var audioRecorder: AudioRecorder
     @StateObject private var player = MIDIPlayer()
     @State private var parameters: ExtractionParameters
     @State private var notes: [NoteEvent]
@@ -12,6 +13,9 @@ struct EditorView: View {
     @State private var pianoRollFitRequestID = 0
     @State private var selectedPreset: PlaybackPreset = .sineWave
     @State private var didInitializeNotes = false
+    @State private var beatMap: BeatMap?
+    @State private var manualBPMText: String
+    @State private var isBeatTapPresented = false
 
     private let correctedResult: InferenceResult
 
@@ -22,10 +26,11 @@ struct EditorView: View {
         let mergeGapMs: Double
     }
 
-    init(inferenceResult: InferenceResult, tuningResult: TuningResult, audioBuffer: [Float]) {
+    init(inferenceResult: InferenceResult, tuningResult: TuningResult, audioBuffer: [Float], audioRecorder: AudioRecorder) {
         self.inferenceResult = inferenceResult
         self.tuningResult = tuningResult
         self.audioBuffer = audioBuffer
+        _audioRecorder = ObservedObject(wrappedValue: audioRecorder)
 
         let corrected = PitchCorrector.correct(result: inferenceResult, centsOffset: tuningResult.centsOffset)
         self.correctedResult = corrected
@@ -33,6 +38,7 @@ struct EditorView: View {
         let defaultParameters = ExtractionParameters.default
         _parameters = State(initialValue: defaultParameters)
         _notes = State(initialValue: [])
+        _manualBPMText = State(initialValue: String(format: "%.0f", MIDIConstants.defaultTempo))
     }
 
     var body: some View {
@@ -41,6 +47,15 @@ struct EditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 exportToolbarItem
+            }
+            .sheet(isPresented: $isBeatTapPresented) {
+                BeatTapView(
+                    audioRecorder: audioRecorder,
+                    recordingDuration: recordingDuration,
+                    initialBeatMap: beatMap
+                ) { newBeatMap in
+                    beatMap = newBeatMap
+                }
             }
             .onChange(of: extractionSignature) { _, _ in
                 reextractNotes()
@@ -71,6 +86,8 @@ struct EditorView: View {
             headerRow
             pianoRollSection
             playbackControls
+                .padding(.horizontal)
+            tempoSection
                 .padding(.horizontal)
             cleanupSection
         }
@@ -111,7 +128,7 @@ struct EditorView: View {
     @ToolbarContentBuilder
     private var exportToolbarItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            MIDIExportShareButton(notes: notes, bpm: MIDIConstants.defaultTempo) {
+            MIDIExportShareButton(notes: notes, bpm: exportBPM) {
                 Label("Export MIDI", systemImage: "square.and.arrow.up")
             }
             .disabled(notes.isEmpty)
@@ -197,8 +214,88 @@ struct EditorView: View {
         )
     }
 
+    private var tempoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Tempo Mapping")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(tempoSummary)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    player.stop()
+                    isBeatTapPresented = true
+                } label: {
+                    Label(beatMap?.bpm == nil ? "Tap Beats" : "Retap Beats", systemImage: "hand.tap")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+
+                TextField("BPM", text: $manualBPMText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 90)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            Text("Export tempo: \(tempoExportLabel)")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+
     private var maxNoteEndTime: Double {
         notes.map { $0.startTime + $0.duration }.max() ?? 0
+    }
+
+    private var recordingDuration: Double {
+        max(Double(audioBuffer.count) / AudioConstants.sampleRate, maxNoteEndTime)
+    }
+
+    private var manualBPM: Double? {
+        let raw = manualBPMText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return nil }
+        guard let value = Double(raw), value > 0 else { return nil }
+        return value
+    }
+
+    private var exportBPM: Double {
+        if let tappedBPM = beatMap?.bpm {
+            return tappedBPM
+        }
+        if let manualBPM {
+            return manualBPM
+        }
+        return MIDIConstants.defaultTempo
+    }
+
+    private var tempoSummary: String {
+        if let tappedBPM = beatMap?.bpm {
+            return "\(Int(tappedBPM.rounded())) BPM (tapped)"
+        }
+        if let manualBPM {
+            return "\(Int(manualBPM.rounded())) BPM (manual)"
+        }
+        return "\(Int(MIDIConstants.defaultTempo.rounded())) BPM (default)"
+    }
+
+    private var tempoExportLabel: String {
+        if beatMap?.bpm != nil {
+            return "\(Int(exportBPM.rounded())) BPM (tapped)"
+        }
+        if manualBPM != nil {
+            return "\(Int(exportBPM.rounded())) BPM (manual)"
+        }
+        return "\(Int(exportBPM.rounded())) BPM (default)"
     }
 
     private func timeLabel(for time: Double) -> String {

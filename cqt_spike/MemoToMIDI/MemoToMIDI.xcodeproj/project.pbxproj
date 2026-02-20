@@ -29,6 +29,8 @@
 		2AB156632F48C001004007B1 /* CleanupSlidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156662F48C001004007B1 /* CleanupSlidersView.swift */; };
 		2AB156642F48C001004007B1 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156672F48C001004007B1 /* EditorView.swift */; };
 		2AB156682F49D001004007B1 /* MIDIPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156692F49D001004007B1 /* MIDIPlayer.swift */; };
+		2AC200102F500001004007B1 /* BeatMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC200112F500001004007B1 /* BeatMap.swift */; };
+		2AC200122F500001004007B1 /* BeatTapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC200132F500001004007B1 /* BeatTapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +58,8 @@
 		2AB156662F48C001004007B1 /* CleanupSlidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupSlidersView.swift; sourceTree = "<group>"; };
 		2AB156672F48C001004007B1 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		2AB156692F49D001004007B1 /* MIDIPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MIDIPlayer.swift; sourceTree = "<group>"; };
+		2AC200112F500001004007B1 /* BeatMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatMap.swift; sourceTree = "<group>"; };
+		2AC200132F500001004007B1 /* BeatTapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatTapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +122,7 @@
 		2AB156452F480384004007B1 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2AC200112F500001004007B1 /* BeatMap.swift */,
 				2AB156572F4808D2004007B1 /* Constants.swift */,
 				2AB156612F48134F004007B1 /* NoteEvent.swift */,
 			);
@@ -191,6 +196,7 @@
 		2AB1564D2F4803D8004007B1 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				2AC200132F500001004007B1 /* BeatTapView.swift */,
 				2AB156662F48C001004007B1 /* CleanupSlidersView.swift */,
 			);
 			path = Components;
@@ -294,11 +300,13 @@
 				2AB156522F48A6F3004007B1 /* PitchCorrector.swift in Sources */,
 				2AB156602F48134F004007B1 /* NoteEvent.swift in Sources */,
 				2AB1565A2F48CE0B004007B1 /* TransientRefiner.swift in Sources */,
+				2AC200102F500001004007B1 /* BeatMap.swift in Sources */,
 				2AB156522F4808A1004007B1 /* Constants.swift in Sources */,
 				2AB156422F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage in Sources */,
 				2AB156532F48A6F3004007B1 /* TuningDetector.swift in Sources */,
 				2AB156572F48B102004007B1 /* MIDIFileWriter.swift in Sources */,
 				2AB156682F49D001004007B1 /* MIDIPlayer.swift in Sources */,
+				2AC200122F500001004007B1 /* BeatTapView.swift in Sources */,
 				2AB156362F47F663004007B1 /* ContentView.swift in Sources */,
 				2AB156342F47F663004007B1 /* MemoToMIDIApp.swift in Sources */,
 			);
