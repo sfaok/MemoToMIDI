@@ -24,6 +24,9 @@
 		2AB1565C2F481111004007B1 /* BasicPitchInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565D2F481111004007B1 /* BasicPitchInference.swift */; };
 		2AB1565E2F4812AA004007B1 /* NoteExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565F2F4812AA004007B1 /* NoteExtractor.swift */; };
 		2AB156602F48134F004007B1 /* NoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156612F48134F004007B1 /* NoteEvent.swift */; };
+		2AB156622F48C001004007B1 /* PianoRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156652F48C001004007B1 /* PianoRollView.swift */; };
+		2AB156632F48C001004007B1 /* CleanupSlidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156662F48C001004007B1 /* CleanupSlidersView.swift */; };
+		2AB156642F48C001004007B1 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156672F48C001004007B1 /* EditorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +49,9 @@
 		2AB1565D2F481111004007B1 /* BasicPitchInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicPitchInference.swift; sourceTree = "<group>"; };
 		2AB1565F2F4812AA004007B1 /* NoteExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteExtractor.swift; sourceTree = "<group>"; };
 		2AB156612F48134F004007B1 /* NoteEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEvent.swift; sourceTree = "<group>"; };
+		2AB156652F48C001004007B1 /* PianoRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PianoRollView.swift; sourceTree = "<group>"; };
+		2AB156662F48C001004007B1 /* CleanupSlidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupSlidersView.swift; sourceTree = "<group>"; };
+		2AB156672F48C001004007B1 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,6 +173,8 @@
 		2AB1564C2F4803CE004007B1 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				2AB156672F48C001004007B1 /* EditorView.swift */,
+				2AB156652F48C001004007B1 /* PianoRollView.swift */,
 				2AB1565A2F4808E6004007B1 /* RecordingView.swift */,
 				2AB1565B2F4808EA004007B1 /* WaveformView.swift */,
 				2AB1564D2F4803D8004007B1 /* Components */,
@@ -177,6 +185,7 @@
 		2AB1564D2F4803D8004007B1 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				2AB156662F48C001004007B1 /* CleanupSlidersView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -267,11 +276,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				2AB156562F4808BF004007B1 /* WaveformView.swift in Sources */,
+				2AB156632F48C001004007B1 /* CleanupSlidersView.swift in Sources */,
+				2AB156642F48C001004007B1 /* EditorView.swift in Sources */,
 				2AB156552F4808B7004007B1 /* RecordingView.swift in Sources */,
 				2AB1565C2F481111004007B1 /* BasicPitchInference.swift in Sources */,
 				2AB156562F48B102004007B1 /* MIDIExporter.swift in Sources */,
 				2AB156542F4808B0004007B1 /* AudioFileReader.swift in Sources */,
 				2AB1565E2F4812AA004007B1 /* NoteExtractor.swift in Sources */,
+				2AB156622F48C001004007B1 /* PianoRollView.swift in Sources */,
 				2AB156532F4808AB004007B1 /* AudioRecorder.swift in Sources */,
 				2AB156522F48A6F3004007B1 /* PitchCorrector.swift in Sources */,
 				2AB156602F48134F004007B1 /* NoteEvent.swift in Sources */,

@@ -11,6 +11,7 @@ struct RecordingView: View {
     @State private var microphoneAllowed = false
     @State private var lastFileDescription: AudioFileDescription?
     @State private var cachedInferenceResult: InferenceResult?
+    @State private var tuningResult: TuningResult?
     @State private var extractedNotes: [NoteEvent] = []
     @State private var lastInferenceDuration: TimeInterval?
     @State private var isRunningInference = false
@@ -110,6 +111,19 @@ struct RecordingView: View {
                     }
                     MIDIExportShareButton(notes: extractedNotes, bpm: MIDIConstants.defaultTempo)
                         .padding(.top, 8)
+                    if let tuningResult {
+                        NavigationLink {
+                            EditorView(
+                                inferenceResult: cachedInferenceResult,
+                                tuningResult: tuningResult
+                            )
+                        } label: {
+                            Label("View Notes", systemImage: "pianokeys")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
+                    }
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -194,6 +208,7 @@ struct RecordingView: View {
 
         do {
             cachedInferenceResult = nil
+            tuningResult = nil
             extractedNotes = []
             lastInferenceDuration = nil
             inferenceProgress = 0
@@ -296,6 +311,7 @@ struct RecordingView: View {
             let elapsed = Date().timeIntervalSince(startTime)
 
             cachedInferenceResult = result
+            tuningResult = TuningDetector.detect(from: result)
             extractedNotes = NoteExtractor.extract(from: result)
             lastInferenceDuration = elapsed
             printValidationSummary(result: result, elapsed: elapsed)
