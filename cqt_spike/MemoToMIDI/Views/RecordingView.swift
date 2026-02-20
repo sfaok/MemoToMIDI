@@ -226,6 +226,7 @@ struct RecordingView: View {
             cachedInferenceResult = result
             lastInferenceDuration = elapsed
             printValidationSummary(result: result, elapsed: elapsed)
+            printExtractionDiagnostics(result: result)
         } catch {
             audioRecorder.errorMessage = "Inference failed: \(error.localizedDescription)"
         }
@@ -279,5 +280,50 @@ struct RecordingView: View {
             let octave = (midiNote / 12) - 1
             return "MIDI \(midiNote) (\(name)\(octave)): \(String(format: "%.4f", activation))"
         }
+    }
+
+    private func printExtractionDiagnostics(result: InferenceResult) {
+        let notes = NoteExtractor.extract(from: result)
+        let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+        print("Extracted \(notes.count) notes:")
+        for note in notes {
+            let name = noteNames[Int(note.pitch) % 12]
+            let octave = (Int(note.pitch) / 12) - 1
+            print(
+                "  \(name)\(octave) (MIDI \(note.pitch)): " +
+                "start=\(String(format: "%.3f", note.startTime))s " +
+                "dur=\(String(format: "%.3f", note.duration))s " +
+                "vel=\(note.velocity)"
+            )
+        }
+
+        let sensitive = ExtractionParameters(
+            onsetThreshold: 0.3,
+            frameThreshold: 0.2,
+            minNoteLengthMs: 30,
+            mergeGapMs: 30
+        )
+        let strict = ExtractionParameters(
+            onsetThreshold: 0.6,
+            frameThreshold: 0.5,
+            minNoteLengthMs: 100,
+            mergeGapMs: 30
+        )
+
+        let notesSensitive = NoteExtractor.extract(from: result, parameters: sensitive)
+        let notesStrict = NoteExtractor.extract(from: result, parameters: strict)
+        print("Sensitive: \(notesSensitive.count) notes")
+        print("Strict: \(notesStrict.count) notes")
+
+        let start = CFAbsoluteTimeGetCurrent()
+        for _ in 0..<100 {
+            _ = NoteExtractor.extract(from: result)
+        }
+        let elapsed = CFAbsoluteTimeGetCurrent() - start
+        print(
+            "100 extractions in \(String(format: "%.1f", elapsed * 1000))ms " +
+            "(avg \(String(format: "%.2f", elapsed * 10))ms each)"
+        )
     }
 }
