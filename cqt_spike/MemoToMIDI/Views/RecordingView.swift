@@ -11,6 +11,7 @@ struct RecordingView: View {
     @State private var microphoneAllowed = false
     @State private var lastFileDescription: AudioFileDescription?
     @State private var cachedInferenceResult: InferenceResult?
+    @State private var cachedAudioBuffer: [Float] = []
     @State private var tuningResult: TuningResult?
     @State private var extractedNotes: [NoteEvent] = []
     @State private var lastInferenceDuration: TimeInterval?
@@ -18,6 +19,7 @@ struct RecordingView: View {
     @State private var inferenceProgress: Double = 0
     @State private var didAttemptWarmUp = false
     @State private var processingRequestID: Int = 0
+    @State private var lastProcessedRecordingURL: URL?
     @State private var testMIDIShareItem: TestMIDIShareItem?
     @State private var testMIDIExportError: MIDIExporterError?
 
@@ -115,7 +117,8 @@ struct RecordingView: View {
                         NavigationLink {
                             EditorView(
                                 inferenceResult: cachedInferenceResult,
-                                tuningResult: tuningResult
+                                tuningResult: tuningResult,
+                                audioBuffer: cachedAudioBuffer
                             )
                         } label: {
                             Label("View Notes", systemImage: "pianokeys")
@@ -208,10 +211,12 @@ struct RecordingView: View {
 
         do {
             cachedInferenceResult = nil
+            cachedAudioBuffer = []
             tuningResult = nil
             extractedNotes = []
             lastInferenceDuration = nil
             inferenceProgress = 0
+            lastProcessedRecordingURL = nil
             try audioRecorder.startRecording()
         } catch {
             audioRecorder.errorMessage = error.localizedDescription
@@ -291,6 +296,9 @@ struct RecordingView: View {
     @MainActor
     private func runInferenceForLastRecording() async {
         guard let url = audioRecorder.lastRecordingURL else { return }
+        if lastProcessedRecordingURL == url, cachedInferenceResult != nil {
+            return
+        }
 
         isRunningInference = true
         inferenceProgress = 0
@@ -300,6 +308,7 @@ struct RecordingView: View {
             let audioSamples = try await Task.detached(priority: .userInitiated) {
                 try AudioFileReader.readSamples(from: url)
             }.value
+            cachedAudioBuffer = audioSamples
 
             let startTime = Date()
             let result = try await inferenceEngine.process(
@@ -311,9 +320,13 @@ struct RecordingView: View {
             let elapsed = Date().timeIntervalSince(startTime)
 
             cachedInferenceResult = result
-            tuningResult = TuningDetector.detect(from: result)
-            extractedNotes = NoteExtractor.extract(from: result)
+            let tuning = TuningDetector.detect(from: result)
+            let corrected = PitchCorrector.correct(result: result, centsOffset: tuning.centsOffset)
+            let extracted = NoteExtractor.extract(from: corrected)
+            tuningResult = tuning
+            extractedNotes = TransientRefiner.refine(notes: extracted, audioBuffer: audioSamples)
             lastInferenceDuration = elapsed
+            lastProcessedRecordingURL = url
             printValidationSummary(result: result, elapsed: elapsed)
             printExtractionDiagnostics(result: result)
         } catch {
@@ -375,7 +388,7 @@ struct RecordingView: View {
         let notes = NoteExtractor.extract(from: result)
         let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
-        print("Extracted \(notes.count) notes:")
+        print("Extracted \(notes.count) notes (raw, pre-correction)")
 
         // Tuning detection test
         let tuning = TuningDetector.detect(from: result)
@@ -388,6 +401,7 @@ struct RecordingView: View {
         let notesCorrected = NoteExtractor.extract(from: corrected)
         print("Without correction: \(notes.count) notes")
         print("With correction: \(notesCorrected.count) notes")
+        print("Corrected note list:")
         for n in notesCorrected {
             let correctedName = noteNames[Int(n.pitch) % 12]
             let correctedOctave = (Int(n.pitch) / 12) - 1
@@ -396,17 +410,6 @@ struct RecordingView: View {
                 "start=\(String(format: "%.3f", n.startTime))s " +
                 "dur=\(String(format: "%.3f", n.duration))s " +
                 "vel=\(n.velocity)"
-            )
-        }
-
-        for note in notes {
-            let name = noteNames[Int(note.pitch) % 12]
-            let octave = (Int(note.pitch) / 12) - 1
-            print(
-                "  \(name)\(octave) (MIDI \(note.pitch)): " +
-                "start=\(String(format: "%.3f", note.startTime))s " +
-                "dur=\(String(format: "%.3f", note.duration))s " +
-                "vel=\(note.velocity)"
             )
         }
 

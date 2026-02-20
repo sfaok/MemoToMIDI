@@ -8,7 +8,9 @@
 - Local repository status:
   - Phase 0: complete
   - Phase 1: complete (implementation + on-device validation passed)
-  - Phases 2-7: not started
+  - Phase 2: complete (inference pipeline integrated and validated)
+  - Phases 3-7: not started
+- **Next piece of work:** Phase 3c (Transient Timing Refinement) integration within Phase 3, as the final step before handing `[NoteEvent]` output to MIDI export and piano roll.
 - This file is the build blueprint; keep `PHASE-STATUS.md` updated as execution status changes
 
 ## Hard Guardrails (Do Not Violate)
@@ -17,8 +19,22 @@
 - SwiftUI UI only (UIKit exception: `UIActivityViewController` for share sheet)
 - Offline inference only after recording stops (never realtime)
 - Audio buffers are `[Float]` / Float32 throughout
-- Slider and cleanup changes re-run note extraction from cached matrices; never re-run CoreML inference
+- Slider, tuning, and transient-refinement changes re-run processing from cached data; never re-run CoreML inference
 - v1 excludes pitch bend export and tempo curves (single tempo event only)
+
+## Project Knowledge: Processing Pipeline
+
+```
+Recorded audio buffer [Float] (22050 Hz mono)
+    → CoreML inference + stitch (cached note/onset matrices)
+    → TuningCorrection
+    → NoteExtractor
+    → TransientRefiner
+    → [NoteEvent]
+    → UI preview + MIDI export
+```
+
+`TransientRefiner` runs after `NoteExtractor` creates discrete `NoteEvent` objects, and before events are handed to UI/MIDI. Toggling refinement re-runs from cached `[NoteEvent]` + raw audio buffer, never from new inference.
 
 ## What Changed from the Original Spec
 
@@ -50,11 +66,12 @@ output: "contour"= [1, 172, 264] per window (deferred)
 - **Pitch bend detection and MIDI export** — simplifies MIDI writer, avoids polyphonic channel rotation
 - **Tempo Curve mode (Mode 3)** — beat tracking from onsets is unreliable for casual/rubato playing
 - **Per-string tuning correction** — flag only, don't auto-correct
+- **Strum spread detection** (per-string onset offsets within a chord) — advanced timing model, not in v1
 - **Chord display (F8)** — nice-to-have, build if time allows
 
 ### Simplified from Original Spec
 - **No DSP/ directory.** Model handles CQT internally.
-- **No Accelerate/vDSP dependency for preprocessing.** Still available if needed for other purposes (e.g., onset energy analysis for tempo detection), but not on the critical path.
+- **No Accelerate/vDSP dependency for preprocessing.** Still available for post-processing tasks (e.g., transient refinement and onset energy analysis for tempo detection), but not on the model-inference critical path.
 - **MIDI writer is simpler** — no pitch bend events, no tempo curve (multiple tempo events). ~100 lines.
 - **Export modes reduced to two:** Fixed BPM, Fixed BPM + Soft Quantization.
 
@@ -78,7 +95,8 @@ MemoToMIDI/
 ├── Processing/
 │   ├── TuningDetector.swift         # Measure median cents offset from note activations
 │   ├── PitchCorrector.swift         # Shift probability matrix by tuning offset
-│   └── NoteExtractor.swift          # Threshold + connected components + cleanup
+│   ├── NoteExtractor.swift          # Threshold + connected components + cleanup
+│   └── TransientRefiner.swift       # Refine NoteEvent start times from raw-audio transients
 ├── MIDI/
 │   ├── MIDIFileWriter.swift         # SMF Type 0 encoder, no pitch bend, no tempo curve
 │   └── MIDIPlayer.swift             # AVAudioEngine playback for preview
@@ -172,7 +190,7 @@ MemoToMIDI/
 ### Phase 3: Note Extraction + Cleanup
 **Goal:** Turn raw probability matrices into `[NoteEvent]` arrays with user-adjustable parameters.
 
-**Split into two sub-prompts:**
+**Split into three sub-prompts:**
 
 **Phase 3a: Note Extraction**
 - Threshold note probabilities (default 0.45 for onset, 0.3 for frame activation)
@@ -191,6 +209,27 @@ MemoToMIDI/
 - Manual adjustment slider (±50 cents)
 - Reference note mode: user plays one known pitch, app measures offset
 - When tuning changes, re-run note extraction from cached output
+
+**Phase 3c: Transient Timing Refinement**
+- **Goal:** Refine ML-derived note start times to sample-accurate precision using transient detection on the raw audio waveform.
+- **Rationale:** The ML onset grid is ~11.6ms. Guitar pick/finger attacks produce sharp transients detectable at sub-millisecond precision. Refining note onsets to transient positions preserves groove feel that frame-grid timing loses, especially for swing, laid-back phrasing, and strum placement.
+- **Build:**
+  - `Processing/TransientRefiner.swift`
+  - Public API: `func refine(notes: [NoteEvent], audioBuffer: [Float], sampleRate: Double) -> [NoteEvent]`
+  - Compute a transient detection function from raw audio with Accelerate/vDSP (spectral flux, HFC, or energy onset; choose the simplest vDSP-primitives path)
+  - Peak-pick the detection function to get sample-accurate transient positions
+  - For each `NoteEvent`, search ±1 ML frame (~±11.6ms) around ML-derived `startTime` for the nearest transient peak
+  - If a transient is found in-window, replace `startTime` with the transient time; if none is found (e.g., soft legato), keep ML timing unchanged
+  - For chord clusters (multiple notes sharing the same ML frame), snap all notes in the cluster to one strongest transient in that search window
+  - Do not detect strum spread/per-string offsets in v1
+  - Refinement is ON by default with user toggle OFF/ON
+  - Toggle changes re-run from cached data only (cached `[NoteEvent]` + audio buffer), never inference
+- **Test:**
+  - Record a fingerpicked pattern (alternating bass + melody), export MIDI with refinement ON and OFF, import both in Logic; ON should align tighter to waveform with visible sub-12ms shifts at high zoom
+  - Record strummed chord progression; verify each chord cluster shares one refined start time (no strum spread artifacts)
+  - Record mixed picked notes + legato hammer-ons; picked notes refine, legato notes keep ML timing (no spurious transient matches)
+  - Refinement adds <50ms processing for a 30-second recording
+- **Estimated scope:** ~60-80 lines of Swift, Accelerate/vDSP only.
 
 **Test:**
 - Record 4-5 distinct chords. Verify correct notes extracted for each.
@@ -245,7 +284,9 @@ MemoToMIDI/
   - Sensitivity (onset threshold)
   - Min note length
   - Note merge distance
+  - Transient refinement toggle (default ON)
   - Adjusting any slider re-runs extraction, updates piano roll live
+  - Toggling transient refinement re-runs `TransientRefiner` from cached `[NoteEvent]` + audio buffer (no re-inference)
 
 **Test:**
 - View detected notes from a recorded chord progression
@@ -316,18 +357,22 @@ Phase 0 ✓ (DONE)
     │       │
     │       └── Phase 2 (inference) ←── needs Phase 1 audio
     │               │
-    │               ├── Phase 3 (note extraction) ←── needs Phase 2 output
+    │               ├── Phase 3a (note extraction) ←── needs Phase 2 output
     │               │       │
-    │               │       ├── Phase 4 (MIDI export) ←── needs [NoteEvent]
-    │               │       │
-    │               │       └── Phase 5 (piano roll) ←── needs [NoteEvent], can parallel with 4
+    │               │       └── Phase 3b (tuning detection)
     │               │               │
-    │               │               └── Phase 6 (tempo + quantization) ←── needs piano roll + export
+    │               │               └── Phase 3c (transient refinement) ←── needs [NoteEvent] + raw audio buffer
     │               │                       │
-    │               │                       └── Phase 7 (library + polish)
+    │               │                       ├── Phase 4 (MIDI export) ←── needs [NoteEvent]
+    │               │                       │
+    │               │                       └── Phase 5 (piano roll) ←── needs [NoteEvent], can parallel with 4
+    │               │                               │
+    │               │                               └── Phase 6 (tempo + quantization) ←── needs piano roll + export
+    │               │                                       │
+    │               │                                       └── Phase 7 (library + polish)
 ```
 
-Phase 4 and Phase 5 can run in parallel — they both consume `[NoteEvent]` but don't depend on each other.
+Phase 4 and Phase 5 can run in parallel after Phase 3c — they both consume the refined `[NoteEvent]` output and don't depend on each other.
 
 ---
 
@@ -458,6 +503,11 @@ enum MIDIConstants {
     static let guitarRangeLow: UInt8 = 40   // E2
     static let guitarRangeHigh: UInt8 = 84  // C6
 }
+
+enum TransientConstants {
+    static let searchWindowFrames: Int = 1
+    static let searchWindowSeconds: Double = Double(256) / 22050.0  // ~11.6ms
+}
 ```
 
 ---
@@ -493,6 +543,12 @@ func process(audioBuffer: [Float]) async throws -> (note: [[Float]], onset: [[Fl
 ```
 Planned:
 func extract(noteMatrix: [[Float]], onsetMatrix: [[Float]], params: ExtractionParams) -> [NoteEvent]
+```
+
+### TransientRefiner (Phase 3c)
+```
+Planned:
+func refine(notes: [NoteEvent], audioBuffer: [Float], sampleRate: Double) -> [NoteEvent]
 ```
 
 ### MIDIFileWriter (Phase 4)

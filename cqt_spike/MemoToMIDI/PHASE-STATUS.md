@@ -6,6 +6,13 @@ Last updated: 2026-02-20
 
 ---
 
+## Current Focus
+
+- **Next piece of work: Phase 3c — Transient Timing Refinement.**
+- Phase 3c is implemented after initial `[NoteEvent]` creation in Phase 3a/3b and is the final Phase 3 step before Phases 4 and 5.
+
+---
+
 ## Phase 0: Model Conversion ✅ COMPLETE
 
 **Deliverables:**
@@ -62,18 +69,25 @@ Last updated: 2026-02-20
 
 ---
 
-## Phase 3: Note Extraction + Tuning ⬜ NOT STARTED
+## Phase 3: Note Extraction + Tuning + Transient Refinement ⬜ NOT STARTED
 
 **Will produce:**
-- `Processing/NoteExtractor.swift`
+- **Phase 3a: Note Extraction**
+  - `Processing/NoteExtractor.swift`
   - Public API: `func extract(noteMatrix: [[Float]], onsetMatrix: [[Float]], params: ExtractionParams) -> [NoteEvent]`
   - Parameters: onset threshold, frame threshold, min duration, merge distance
-- `Processing/TuningDetector.swift`
+- **Phase 3b: Tuning Detection + Correction**
+  - `Processing/TuningDetector.swift`
   - Public API: `func detectTuning(noteMatrix: [[Float]]) -> Double` (cents offset)
-- `Processing/PitchCorrector.swift`
+  - `Processing/PitchCorrector.swift`
   - Public API: `func correct(noteMatrix: [[Float]], centsOffset: Double) -> [[Float]]`
+- **Phase 3c: Transient Timing Refinement** **← NEXT PIECE OF WORK**
+  - `Processing/TransientRefiner.swift`
+  - Public API: `func refine(notes: [NoteEvent], audioBuffer: [Float], sampleRate: Double) -> [NoteEvent]`
+  - Refines `NoteEvent.startTime` using raw-audio transient peaks within ±1 ML frame window (~±11.6ms)
+  - Runs from cached data only (cached notes + raw audio buffer), no re-inference
 
-**Depends on:** Phase 2 (cached note and onset matrices)
+**Depends on:** Phase 2 (cached note/onset matrices) + raw audio buffer from Phase 1; Phase 3c consumes `[NoteEvent]` output from Phase 3a/3b
 
 ---
 
@@ -85,7 +99,7 @@ Last updated: 2026-02-20
   - SMF Type 0, 480 PPQN, single tempo event, note-on/off only
 - Share sheet integration via `UIActivityViewController`
 
-**Depends on:** Phase 3 (`[NoteEvent]` array)
+**Depends on:** Phase 3c (refined `[NoteEvent]` array)
 
 ---
 
@@ -97,7 +111,7 @@ Last updated: 2026-02-20
 - `MIDI/MIDIPlayer.swift` — AVAudioEngine + AVAudioUnitSampler playback
 - `Views/Components/CleanupSlidersView.swift` — Threshold/merge sliders
 
-**Depends on:** Phase 3 (can run parallel with Phase 4)
+**Depends on:** Phase 3c (can run parallel with Phase 4)
 
 ---
 
@@ -163,6 +177,12 @@ Actual:  struct InferenceResult {
 ### NoteExtractor (Phase 3)
 ```
 Planned: func extract(noteMatrix: [[Float]], onsetMatrix: [[Float]], params: ExtractionParams) -> [NoteEvent]
+Actual:  [pending]
+```
+
+### TransientRefiner (Phase 3c)
+```
+Planned: func refine(notes: [NoteEvent], audioBuffer: [Float], sampleRate: Double) -> [NoteEvent]
 Actual:  [pending]
 ```
 

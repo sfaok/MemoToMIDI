@@ -3,6 +3,7 @@ import SwiftUI
 struct EditorView: View {
     let inferenceResult: InferenceResult
     let tuningResult: TuningResult
+    let audioBuffer: [Float]
 
     @StateObject private var player = MIDIPlayer()
     @State private var parameters: ExtractionParameters
@@ -10,6 +11,7 @@ struct EditorView: View {
     @State private var isCleanupExpanded = true
     @State private var pianoRollFitRequestID = 0
     @State private var selectedPreset: PlaybackPreset = .sineWave
+    @State private var didInitializeNotes = false
 
     private let correctedResult: InferenceResult
 
@@ -20,16 +22,17 @@ struct EditorView: View {
         let mergeGapMs: Double
     }
 
-    init(inferenceResult: InferenceResult, tuningResult: TuningResult) {
+    init(inferenceResult: InferenceResult, tuningResult: TuningResult, audioBuffer: [Float]) {
         self.inferenceResult = inferenceResult
         self.tuningResult = tuningResult
+        self.audioBuffer = audioBuffer
 
         let corrected = PitchCorrector.correct(result: inferenceResult, centsOffset: tuningResult.centsOffset)
         self.correctedResult = corrected
 
         let defaultParameters = ExtractionParameters.default
         _parameters = State(initialValue: defaultParameters)
-        _notes = State(initialValue: NoteExtractor.extract(from: corrected, parameters: defaultParameters))
+        _notes = State(initialValue: [])
     }
 
     var body: some View {
@@ -49,6 +52,7 @@ struct EditorView: View {
                 player.stop()
             }
             .onAppear {
+                initializeNotesIfNeeded()
                 do {
                     try player.setup()
                 } catch {
@@ -205,8 +209,17 @@ struct EditorView: View {
     }
 
     private func reextractNotes() {
+        guard didInitializeNotes else { return }
         player.stop()
-        notes = NoteExtractor.extract(from: correctedResult, parameters: parameters)
+        let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
+        notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
         pianoRollFitRequestID += 1
+    }
+
+    private func initializeNotesIfNeeded() {
+        guard !didInitializeNotes else { return }
+        didInitializeNotes = true
+        let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
+        notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
     }
 }

@@ -21,6 +21,7 @@
 		2AB156562F4808BF004007B1 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565B2F4808EA004007B1 /* WaveformView.swift */; };
 		2AB156562F48B102004007B1 /* MIDIExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156542F48B102004007B1 /* MIDIExporter.swift */; };
 		2AB156572F48B102004007B1 /* MIDIFileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156552F48B102004007B1 /* MIDIFileWriter.swift */; };
+		2AB1565A2F48CE0B004007B1 /* TransientRefiner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156592F48CE0B004007B1 /* TransientRefiner.swift */; };
 		2AB1565C2F481111004007B1 /* BasicPitchInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565D2F481111004007B1 /* BasicPitchInference.swift */; };
 		2AB1565E2F4812AA004007B1 /* NoteExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB1565F2F4812AA004007B1 /* NoteExtractor.swift */; };
 		2AB156602F48134F004007B1 /* NoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156612F48134F004007B1 /* NoteEvent.swift */; };
@@ -45,6 +46,7 @@
 		2AB156572F4808D2004007B1 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		2AB156582F4808D7004007B1 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		2AB156592F4808DD004007B1 /* AudioFileReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFileReader.swift; sourceTree = "<group>"; };
+		2AB156592F48CE0B004007B1 /* TransientRefiner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TransientRefiner.swift; sourceTree = "<group>"; };
 		2AB1565A2F4808E6004007B1 /* RecordingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingView.swift; sourceTree = "<group>"; };
 		2AB1565B2F4808EA004007B1 /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		2AB1565D2F481111004007B1 /* BasicPitchInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicPitchInference.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 		2AB156482F4803A4004007B1 /* Processing */ = {
 			isa = PBXGroup;
 			children = (
+				2AB156592F48CE0B004007B1 /* TransientRefiner.swift */,
 				2AB156502F48A6F3004007B1 /* PitchCorrector.swift */,
 				2AB156512F48A6F3004007B1 /* TuningDetector.swift */,
 				2AB1565F2F4812AA004007B1 /* NoteExtractor.swift */,
@@ -290,6 +293,7 @@
 				2AB156532F4808AB004007B1 /* AudioRecorder.swift in Sources */,
 				2AB156522F48A6F3004007B1 /* PitchCorrector.swift in Sources */,
 				2AB156602F48134F004007B1 /* NoteEvent.swift in Sources */,
+				2AB1565A2F48CE0B004007B1 /* TransientRefiner.swift in Sources */,
 				2AB156522F4808A1004007B1 /* Constants.swift in Sources */,
 				2AB156422F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage in Sources */,
 				2AB156532F48A6F3004007B1 /* TuningDetector.swift in Sources */,
