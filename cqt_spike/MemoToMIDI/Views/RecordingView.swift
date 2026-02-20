@@ -1,16 +1,24 @@
 import SwiftUI
 
 struct RecordingView: View {
+    private struct TestMIDIShareItem: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
+
     @StateObject private var audioRecorder = AudioRecorder()
     @State private var inferenceEngine = BasicPitchInference()
     @State private var microphoneAllowed = false
     @State private var lastFileDescription: AudioFileDescription?
     @State private var cachedInferenceResult: InferenceResult?
+    @State private var extractedNotes: [NoteEvent] = []
     @State private var lastInferenceDuration: TimeInterval?
     @State private var isRunningInference = false
     @State private var inferenceProgress: Double = 0
     @State private var didAttemptWarmUp = false
     @State private var processingRequestID: Int = 0
+    @State private var testMIDIShareItem: TestMIDIShareItem?
+    @State private var testMIDIExportError: MIDIExporterError?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -38,6 +46,12 @@ struct RecordingView: View {
                 .buttonStyle(.bordered)
                 .disabled(audioRecorder.lastRecordingURL == nil || audioRecorder.isRecording || isRunningInference)
             }
+
+            Button("Generate Test MIDI") {
+                generateKnownTestMIDI()
+            }
+            .buttonStyle(.bordered)
+            .disabled(audioRecorder.isRecording || isRunningInference)
 
             if isRunningInference {
                 ProgressView(value: inferenceProgress)
@@ -94,6 +108,8 @@ struct RecordingView: View {
                                 .font(.caption.monospacedDigit())
                         }
                     }
+                    MIDIExportShareButton(notes: extractedNotes, bpm: MIDIConstants.defaultTempo)
+                        .padding(.top, 8)
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,6 +141,30 @@ struct RecordingView: View {
             refreshLastFileDescription()
             processingRequestID += 1
         }
+        .sheet(item: $testMIDIShareItem, onDismiss: {
+            testMIDIShareItem = nil
+        }) { item in
+            MIDIShareSheet(items: [item.url])
+        }
+        .alert(
+            "Test MIDI Export Failed",
+            isPresented: Binding(
+                get: { testMIDIExportError != nil },
+                set: { shouldShow in
+                    if !shouldShow {
+                        testMIDIExportError = nil
+                    }
+                }
+            ),
+            actions: {
+                Button("OK", role: .cancel) {
+                    testMIDIExportError = nil
+                }
+            },
+            message: {
+                Text(testMIDIExportError?.errorDescription ?? "Unknown error")
+            }
+        )
     }
 
     private var statusText: String {
@@ -154,6 +194,7 @@ struct RecordingView: View {
 
         do {
             cachedInferenceResult = nil
+            extractedNotes = []
             lastInferenceDuration = nil
             inferenceProgress = 0
             try audioRecorder.startRecording()
@@ -171,6 +212,31 @@ struct RecordingView: View {
             try audioRecorder.playLastRecording()
         } catch {
             audioRecorder.errorMessage = error.localizedDescription
+        }
+    }
+
+    private func generateKnownTestMIDI() {
+        let testNotes = [
+            NoteEvent(pitch: 60, startTime: 0.0, duration: 0.5, velocity: 100),  // C4, beat 1
+            NoteEvent(pitch: 64, startTime: 0.5, duration: 0.5, velocity: 90),   // E4, beat 2
+            NoteEvent(pitch: 67, startTime: 1.0, duration: 0.5, velocity: 80),   // G4, beat 3
+            NoteEvent(pitch: 72, startTime: 1.5, duration: 1.0, velocity: 110)   // C5, beat 4 (held 2 beats)
+        ]
+
+        let midiData = MIDIFileWriter.write(notes: testNotes, bpm: 120.0)
+        print("MIDI file size: \(midiData.count) bytes")
+
+        do {
+            let exportedTestMIDIURL = try MIDIExporter.exportToFile(notes: testNotes, bpm: 120.0)
+            guard FileManager.default.fileExists(atPath: exportedTestMIDIURL.path) else {
+                throw MIDIExporterError.fileUnavailable(path: exportedTestMIDIURL.path)
+            }
+            print("Exported to: \(exportedTestMIDIURL.path)")
+            testMIDIShareItem = TestMIDIShareItem(url: exportedTestMIDIURL)
+        } catch let exporterError as MIDIExporterError {
+            testMIDIExportError = exporterError
+        } catch {
+            testMIDIExportError = .failedToWriteFile(underlying: error)
         }
     }
 
@@ -230,6 +296,7 @@ struct RecordingView: View {
             let elapsed = Date().timeIntervalSince(startTime)
 
             cachedInferenceResult = result
+            extractedNotes = NoteExtractor.extract(from: result)
             lastInferenceDuration = elapsed
             printValidationSummary(result: result, elapsed: elapsed)
             printExtractionDiagnostics(result: result)
