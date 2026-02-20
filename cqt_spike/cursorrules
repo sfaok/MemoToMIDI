@@ -1,0 +1,50 @@
+# MemoToMIDI — Cursor Rules
+
+# READ AGENTS.md FIRST. It contains all project constraints, model constants,
+# data models, and architecture. This file adds Cursor-specific guidance.
+
+# === PROJECT CONTEXT ===
+# iOS app: record guitar → CoreML note detection → MIDI export
+# Pure Swift, no third-party dependencies
+# iOS 17.0, iPhone 13 target
+# Check PHASE-STATUS.md before starting any work
+
+# === HARD CONSTRAINTS ===
+# - Only Apple frameworks: SwiftUI, AVFoundation, CoreML, Accelerate, Foundation
+# - No CocoaPods, no SPM, no Package.swift
+# - SwiftUI for all UI (UIKit only for UIActivityViewController share sheet)
+# - CoreML model is pre-bundled as BasicPitch_from_tf.mlpackage — never convert in Swift
+# - All audio buffers are [Float] (Float32), never Double
+# - Offline ML inference only — runs after recording stops, never during
+
+# === ARCHITECTURE RULE ===
+# Slider/parameter changes re-run note extraction from CACHED ML output.
+# They NEVER re-run CoreML inference. If your code re-runs inference when
+# a user adjusts a threshold, it is wrong.
+
+# === FILE PLACEMENT ===
+# Follow the project structure in AGENTS.md exactly.
+# Models/ Audio/ ML/ Processing/ MIDI/ Analysis/ Storage/ Views/ Views/Components/
+# One primary type per file. Constants in Models/Constants.swift.
+
+# === CODE STYLE ===
+# - async/await over callbacks or Combine
+# - Error enums, not string error messages
+# - No force unwraps except on known-existing bundled resources
+# - Keep files focused and small
+# - SMF MIDI files are big-endian — use .bigEndian on all multi-byte writes
+
+# === KNOWN PITFALLS ===
+# - iPhone mic is 48kHz — need AVAudioConverter to get 22050 Hz
+# - MLMultiArray: use dataPointer init for zero-copy, not element-by-element copy
+# - CoreML first inference is slow — warm model at app launch
+# - Default onset threshold is 0.45, not 0.5
+# - AVAudioSession must be .playAndRecord with .defaultToSpeaker
+
+# === DO NOT BUILD ===
+# - Pitch bend detection/export (post-v1)
+# - Tempo curve / multiple tempo events (post-v1)
+# - Chord display (post-v1)
+# - Core Data / SwiftData (use file-based JSON)
+# - Note editing beyond delete (no move/resize in v1)
+# - Network features, cloud sync, accounts

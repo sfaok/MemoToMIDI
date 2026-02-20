@@ -1,42 +1,65 @@
 # MemoToMIDI
 
-Initial spike workspace for validating Basic Pitch preprocessing and CoreML viability before building the iOS app.
+MemoToMIDI is an iOS app-in-progress that turns recorded audio into MIDI.  
+This repo currently includes:
 
-## Scope
+- A validated Basic Pitch/CoreML spike workflow (`scripts/` + `cqt_spike/` artifacts)
+- A working iOS Phase 1 app shell (`record + playback + waveform`) in SwiftUI
 
-This repo starts with the CQT spike workflow from `MemoToMIDI-CQT-Spike-Plan.md`:
+## Current Status
 
-1. Inspect Basic Pitch source to confirm preprocessing and tensor contracts.
-2. Capture reference tensors from a known test signal.
-3. Attempt CoreML conversion and numeric output comparison.
+- Spike validation: complete through CoreML comparison + diagnostics
+- iOS app: Phase 1 implemented (`22,050 Hz mono capture`, file save, playback)
+- Build plan: `cqt_spike/MemoToMIDI/UPDATED_BUILD_PLAN.md`
 
-## Quick Start
+## Repository Layout
 
-Use Python 3.10 or 3.11. Basic Pitch is not officially compatible with Python 3.14.
+- `scripts/` Python spike scripts (Step 1 to Step 4)
+- `cqt_spike/` generated artifacts, reports, model assets, and Swift spike code
+- `cqt_spike/MemoToMIDI/` Xcode iOS project (`MemoToMIDI.xcodeproj`)
+- `requirements-spike.txt` Python dependencies for spike scripts
 
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+## Prerequisites
+
+- macOS (for Xcode/iOS app)
+- Xcode 15+ (project deployment target: iOS 17.2)
+- Python 3.10 or 3.11 for spike scripts
+
+## Quick Start (Spike Workflow)
+
+From repo root:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements-spike.txt
 ```
 
-Generate a Step 1 source report:
+Run scripts:
 
-```powershell
+```bash
 python scripts/step1_inspect_basic_pitch.py
-```
-
-Run Step 2 reference capture (uses synthetic G major chord if no audio is provided):
-
-```powershell
 python scripts/step2_capture_reference.py
+python scripts/step3_full_pipeline_comparison.py
+python scripts/step3_diagnostics.py
+python scripts/step3_real_audio_comparison.py --audio cqt_spike/step3_real_audio_input.wav
+python scripts/step4_precompute_assets.py
 ```
 
-Use a custom WAV input:
+Most outputs are written to `cqt_spike/`.
 
-```powershell
-python scripts/step2_capture_reference.py --audio path\to\input.wav
-```
+## Run the iOS App
 
-Artifacts are written to `cqt_spike/`.
+1. Open `cqt_spike/MemoToMIDI/MemoToMIDI.xcodeproj` in Xcode.
+2. Select an iPhone target (device preferred for microphone testing).
+3. Build and run.
+4. Grant microphone permission.
+5. Use the Record/Stop and Play Last controls on the `Phase 1: Record + Playback` screen.
+
+The app records WAV files to the app Documents directory at `22,050 Hz` mono float32.
+
+## Notes
+
+- `cqt_spike/` includes research artifacts and intermediate files from model validation.
+- Root `.gitignore` excludes many generated spike artifact types (`.npy`, `.json`, `.wav`, etc.).

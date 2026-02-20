@@ -1,6 +1,24 @@
 # MemoToMIDI — Updated Build Plan
 
-## Date: February 19, 2026
+## Date: February 20, 2026
+
+## Sync Update (Based on PHASE-STATUS + AGENTS + CLAUDE + Cursor Rules)
+
+- Source docs reviewed on February 20, 2026: `PHASE-STATUS.md`, `AGENTS.md`, `CLAUDE.md`, `cursorrules`
+- Local repository status:
+  - Phase 0: complete
+  - Phase 1: complete (implementation + on-device validation passed)
+  - Phases 2-7: not started
+- This file is the build blueprint; keep `PHASE-STATUS.md` updated as execution status changes
+
+## Hard Guardrails (Do Not Violate)
+
+- Pure Swift, no third-party dependencies (no SPM packages, no CocoaPods)
+- SwiftUI UI only (UIKit exception: `UIActivityViewController` for share sheet)
+- Offline inference only after recording stops (never realtime)
+- Audio buffers are `[Float]` / Float32 throughout
+- Slider and cleanup changes re-run note extraction from cached matrices; never re-run CoreML inference
+- v1 excludes pitch bend export and tempo curves (single tempo event only)
 
 ## What Changed from the Original Spec
 
@@ -49,7 +67,8 @@ MemoToMIDI/
 ├── MemoToMIDIApp.swift
 ├── Models/
 │   ├── NoteEvent.swift              # pitch, start, duration, velocity
-│   └── Recording.swift              # Recording metadata
+│   ├── Recording.swift              # Recording metadata
+│   └── Constants.swift              # Shared constants (audio/model/MIDI defaults)
 ├── Audio/
 │   ├── AudioRecorder.swift          # AVAudioEngine capture → .wav at 22050 Hz mono
 │   └── AudioFileReader.swift        # Read .wav into float32 buffer
@@ -95,8 +114,17 @@ MemoToMIDI/
 - Swift CLI proof of concept validated at zero diff
 - Deliverable: `BasicPitch_from_tf.mlpackage` + spike documentation
 
-### Phase 1: Xcode Project + Audio Capture + Playback
+### Phase 1: Xcode Project + Audio Capture + Playback — DONE ✓
 **Goal:** iPhone app that records audio at 22050 Hz mono, saves .wav, plays back.
+
+**Implementation status in this repo (as of Feb 20, 2026):**
+- ✅ Xcode project exists (`MemoToMIDI.xcodeproj`)
+- ✅ `AudioRecorder.swift` implemented with `AVAudioConverter` path and `.playAndRecord` + `.defaultToSpeaker`
+- ✅ `AudioFileReader.swift` implemented (`describeFile`, `readMonoFloat32`)
+- ✅ `RecordingView.swift` + `WaveformView.swift` implemented for record/stop/play + live waveform
+- ✅ `Models/Constants.swift` created with Phase 1 constants
+- ✅ Run and verify on physical iPhone 13 with sample-rate confirmation
+- ✅ Confirm `BasicPitch_from_tf.mlpackage` is bundled in target for Phase 2 handoff
 
 **Build:**
 - Create Xcode project (iOS 17.0, SwiftUI, iPhone 13 target)
@@ -284,7 +312,7 @@ MemoToMIDI/
 ```
 Phase 0 ✓ (DONE)
     │
-    ├── Phase 1 (audio capture)  ←── can start immediately
+    ├── Phase 1 (audio capture)  ←── complete
     │       │
     │       └── Phase 2 (inference) ←── needs Phase 1 audio
     │               │
@@ -303,7 +331,7 @@ Phase 4 and Phase 5 can run in parallel — they both consume `[NoteEvent]` but 
 
 ---
 
-## Build Setup Instructions
+## Build Setup Instructions (Fresh Setup / New Clone)
 
 ### Prerequisites
 - Mac with Xcode 15+ installed
@@ -403,8 +431,8 @@ Copy `BasicPitchRunner.swift` from the spike into `ML/BasicPitchInference.swift`
 - The app should launch (blank screen is fine at this point)
 - Check the console for any CoreML model loading warnings
 
-### You're Ready for Phase 1
-At this point the Xcode project exists, the model is bundled, the data model is defined, and the inference logic is available to port. Phase 1 (audio capture) can begin.
+### You’re Ready for Phase 2
+At this point the Xcode project exists, the model is bundled, and audio capture/playback is complete and validated on device. Phase 2 (inference) can begin.
 
 ---
 
@@ -430,4 +458,45 @@ enum MIDIConstants {
     static let guitarRangeLow: UInt8 = 40   // E2
     static let guitarRangeHigh: UInt8 = 84  // C6
 }
+```
+
+---
+
+## Interface Contracts Snapshot
+
+Track actual signatures here as phases progress so downstream work stays aligned with real APIs.
+
+### AudioRecorder (Phase 1)
+```
+Current:
+func requestMicrophoneAccess() async -> Bool
+func startRecording() throws
+func stopRecording()
+func playLastRecording() throws
+func stopPlayback()
+```
+
+### AudioFileReader (Phase 1)
+```
+Current:
+static func describeFile(at url: URL) throws -> AudioFileDescription
+static func readMonoFloat32(from url: URL, targetSampleRate: Double = AudioConstants.sampleRate) throws -> [Float]
+```
+
+### BasicPitchInference (Phase 2)
+```
+Planned:
+func process(audioBuffer: [Float]) async throws -> (note: [[Float]], onset: [[Float]])
+```
+
+### NoteExtractor (Phase 3)
+```
+Planned:
+func extract(noteMatrix: [[Float]], onsetMatrix: [[Float]], params: ExtractionParams) -> [NoteEvent]
+```
+
+### MIDIFileWriter (Phase 4)
+```
+Planned:
+func writeMIDI(notes: [NoteEvent], bpm: Double, to url: URL) throws
 ```
