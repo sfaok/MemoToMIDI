@@ -27,6 +27,7 @@
 		2AB156622F48C001004007B1 /* PianoRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156652F48C001004007B1 /* PianoRollView.swift */; };
 		2AB156632F48C001004007B1 /* CleanupSlidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156662F48C001004007B1 /* CleanupSlidersView.swift */; };
 		2AB156642F48C001004007B1 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156672F48C001004007B1 /* EditorView.swift */; };
+		2AB156682F49D001004007B1 /* MIDIPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB156692F49D001004007B1 /* MIDIPlayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +53,7 @@
 		2AB156652F48C001004007B1 /* PianoRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PianoRollView.swift; sourceTree = "<group>"; };
 		2AB156662F48C001004007B1 /* CleanupSlidersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupSlidersView.swift; sourceTree = "<group>"; };
 		2AB156672F48C001004007B1 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		2AB156692F49D001004007B1 /* MIDIPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MIDIPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,6 +154,7 @@
 			children = (
 				2AB156542F48B102004007B1 /* MIDIExporter.swift */,
 				2AB156552F48B102004007B1 /* MIDIFileWriter.swift */,
+				2AB156692F49D001004007B1 /* MIDIPlayer.swift */,
 			);
 			path = MIDI;
 			sourceTree = "<group>";
@@ -291,6 +294,7 @@
 				2AB156422F47F6EB004007B1 /* BasicPitch_from_tf.mlpackage in Sources */,
 				2AB156532F48A6F3004007B1 /* TuningDetector.swift in Sources */,
 				2AB156572F48B102004007B1 /* MIDIFileWriter.swift in Sources */,
+				2AB156682F49D001004007B1 /* MIDIPlayer.swift in Sources */,
 				2AB156362F47F663004007B1 /* ContentView.swift in Sources */,
 				2AB156342F47F663004007B1 /* MemoToMIDIApp.swift in Sources */,
 			);

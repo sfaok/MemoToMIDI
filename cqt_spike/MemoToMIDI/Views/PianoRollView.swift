@@ -3,6 +3,8 @@ import SwiftUI
 struct PianoRollView: View {
     @Binding var notes: [NoteEvent]
     let fitRequestID: Int
+    let playbackTime: Double
+    let onSeekRequested: ((Double) -> Void)?
 
     @State private var selectedNoteIDs: Set<UUID> = []
     @State private var pixelsPerSecond: CGFloat = 100
@@ -20,6 +22,18 @@ struct PianoRollView: View {
     private let minPixelsPerSecond: CGFloat = 20
     private let maxPixelsPerSecond: CGFloat = 500
     private let scrollSpaceName = "PianoRollScroll"
+
+    init(
+        notes: Binding<[NoteEvent]>,
+        fitRequestID: Int,
+        playbackTime: Double,
+        onSeekRequested: ((Double) -> Void)? = nil
+    ) {
+        self._notes = notes
+        self.fitRequestID = fitRequestID
+        self.playbackTime = playbackTime
+        self.onSeekRequested = onSeekRequested
+    }
 
     private var uniqueDetectedPitches: [Int] {
         Array(Set(notes.map { Int($0.pitch) })).sorted()
@@ -256,7 +270,23 @@ struct PianoRollView: View {
                 .fill(Color.white.opacity(0.2))
                 .frame(height: 1)
                 .frame(maxHeight: .infinity, alignment: .bottom)
+
+            Path { path in
+                let x = xPosition(for: playbackTime)
+                path.move(to: CGPoint(x: x, y: 0))
+                path.addLine(to: CGPoint(x: x, y: rulerHeight))
+            }
+            .stroke(Color.yellow, lineWidth: 2)
         }
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onEnded { value in
+                    let isTap = abs(value.translation.width) < 8 && abs(value.translation.height) < 8
+                    guard isTap else { return }
+                    seekPlayback(toXPosition: value.location.x)
+                }
+        )
     }
 
     private var pitchLabels: some View {
@@ -329,6 +359,12 @@ struct PianoRollView: View {
                     )
                 }
             }
+
+            var scrubber = Path()
+            let x = xPosition(for: playbackTime)
+            scrubber.move(to: CGPoint(x: x, y: 0))
+            scrubber.addLine(to: CGPoint(x: x, y: size.height))
+            context.stroke(scrubber, with: .color(.yellow), lineWidth: 2)
         }
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
@@ -357,6 +393,7 @@ struct PianoRollView: View {
     private func handleTap(at point: CGPoint) {
         guard let hitNote = note(at: point) else {
             selectedNoteIDs.removeAll()
+            seekPlayback(toXPosition: point.x)
             return
         }
 
@@ -384,6 +421,13 @@ struct PianoRollView: View {
         }
 
         return candidates.min(by: { $0.duration < $1.duration })
+    }
+
+    private func seekPlayback(toXPosition x: CGFloat) {
+        guard let onSeekRequested else { return }
+        let unclamped = timelineStart + Double(x / pixelsPerSecond)
+        let clamped = min(max(unclamped, 0), max(timelineEnd, 0))
+        onSeekRequested(clamped)
     }
 
     private func deleteSelectedNotes() {
