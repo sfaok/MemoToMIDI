@@ -93,6 +93,14 @@ final class BasicPitchInference {
             reportProgress(Double(windowIndex + 1) / Double(totalWindows), callback: progressCallback)
         }
 
+        // The model input is prepended with silence to match Basic Pitch framing.
+        // Remove the corresponding leading frames so frame 0 aligns to recording start.
+        let prependFrames = AudioConstants.prependSamples / AudioConstants.modelHopSize
+        if prependFrames > 0, noteActivations.count > prependFrames, onsetActivations.count > prependFrames {
+            noteActivations.removeFirst(prependFrames)
+            onsetActivations.removeFirst(prependFrames)
+        }
+
         let expectedFrameCount = max(
             1,
             Int(Double(audioSamples.count) / Double(AudioConstants.modelHopSize))

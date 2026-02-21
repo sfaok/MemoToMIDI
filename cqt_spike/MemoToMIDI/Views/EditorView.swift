@@ -12,12 +12,19 @@ struct EditorView: View {
     @State private var isCleanupExpanded = true
     @State private var pianoRollFitRequestID = 0
     @State private var selectedPreset: PlaybackPreset = .sineWave
+    @State private var playbackMode: PlaybackMode = .midiOnly
+    @State private var overlayMix: Double = 0.5
+    @State private var mixDebounceTask: Task<Void, Never>?
     @State private var didInitializeNotes = false
     @State private var beatMap: BeatMap?
     @State private var manualBPMText: String
     @State private var isBeatTapPresented = false
 
     private let correctedResult: InferenceResult
+    private enum PlaybackMode: String, CaseIterable {
+        case midiOnly = "MIDI Only"
+        case withRecording = "With Recording"
+    }
 
     private struct ExtractionSignature: Equatable {
         let onsetThreshold: Float
@@ -63,8 +70,25 @@ struct EditorView: View {
             .onChange(of: selectedPreset) { _, newPreset in
                 player.setPreset(newPreset)
             }
-            .onChange(of: noteIDSignature) { _, _ in
-                player.stop()
+            .onChange(of: playbackMode) { _, newMode in
+                stopTransport()
+                if newMode == .withRecording {
+                    prepareOverlayResources()
+                }
+            }
+            .onChange(of: overlayMix) { _, _ in
+                scheduleOverlayMixUpdate()
+            }
+            .onChange(of: notePreparationSignature) { _, _ in
+                stopTransport()
+                if playbackMode == .withRecording {
+                    prepareOverlayResources()
+                }
+            }
+            .onChange(of: player.isPlaying) { wasPlaying, isPlaying in
+                guard playbackMode == .withRecording else { return }
+                guard wasPlaying, !isPlaying else { return }
+                prepareOverlayResources()
             }
             .onAppear {
                 initializeNotesIfNeeded()
@@ -74,10 +98,14 @@ struct EditorView: View {
                     // Playback controls remain visible even if setup fails.
                 }
                 player.setPreset(selectedPreset)
+                if playbackMode == .withRecording {
+                    prepareOverlayResources()
+                }
                 pianoRollFitRequestID += 1
             }
             .onDisappear {
-                player.stop()
+                mixDebounceTask?.cancel()
+                stopTransport()
             }
     }
 
@@ -112,7 +140,7 @@ struct EditorView: View {
             fitRequestID: pianoRollFitRequestID,
             playbackTime: player.currentTime
         ) { time in
-            player.seek(to: time)
+            seekTransport(to: time)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -144,8 +172,17 @@ struct EditorView: View {
         )
     }
 
-    private var noteIDSignature: [UUID] {
-        notes.map(\.id)
+    private var notePreparationSignature: Int {
+        var hasher = Hasher()
+        hasher.combine(notes.count)
+        for note in notes {
+            hasher.combine(note.id)
+            hasher.combine(note.pitch)
+            hasher.combine(note.startTime.bitPattern)
+            hasher.combine(note.duration.bitPattern)
+            hasher.combine(note.velocity)
+        }
+        return hasher.finalize()
     }
 
     private var tuningLabel: String {
@@ -155,37 +192,40 @@ struct EditorView: View {
 
     private var playbackControls: some View {
         VStack(spacing: 10) {
+            Picker("Playback Mode", selection: $playbackMode) {
+                ForEach(PlaybackMode.allCases, id: \.self) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
             HStack(spacing: 12) {
                 Button {
-                    player.seek(to: max(player.currentTime - 2.0, 0))
+                    seekTransport(to: max(player.currentTime - 2.0, 0))
                 } label: {
                     Image(systemName: "backward.fill")
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.bordered)
-                .disabled(notes.isEmpty)
+                .disabled(!canPlayCurrentMode || playbackMode == .withRecording)
 
                 Button {
-                    if player.isPlaying {
-                        player.pause()
-                    } else {
-                        player.play(notes: notes)
-                    }
+                    togglePlayback()
                 } label: {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                    Image(systemName: isTransportPlaying ? "pause.fill" : "play.fill")
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(notes.isEmpty)
+                .disabled(!canPlayCurrentMode)
 
                 Button {
-                    player.stop()
+                    stopTransport()
                 } label: {
                     Image(systemName: "stop.fill")
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.bordered)
-                .disabled(notes.isEmpty)
+                .disabled(!canPlayCurrentMode)
 
                 Picker("Instrument", selection: $selectedPreset) {
                     ForEach(PlaybackPreset.allCases, id: \.self) { preset in
@@ -193,6 +233,38 @@ struct EditorView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+            }
+
+            if playbackMode == .withRecording {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Original")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("MIDI")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: $overlayMix, in: 0...1)
+                }
+
+                if player.isPreparingOverlay {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Preparing overlay...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let overlayError = player.overlayPreparationError, !overlayError.isEmpty {
+                    Text(overlayError)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             HStack {
@@ -214,6 +286,19 @@ struct EditorView: View {
         )
     }
 
+    private var canPlayCurrentMode: Bool {
+        guard !notes.isEmpty else { return false }
+        if player.isPreparingOverlay { return false }
+        if playbackMode == .withRecording {
+            return audioRecorder.lastRecordingURL != nil
+        }
+        return true
+    }
+
+    private var isTransportPlaying: Bool {
+        return player.isPlaying
+    }
+
     private var tempoSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -227,7 +312,7 @@ struct EditorView: View {
 
             HStack(spacing: 12) {
                 Button {
-                    player.stop()
+                    stopTransport()
                     isBeatTapPresented = true
                 } label: {
                     Label(beatMap?.bpm == nil ? "Tap Beats" : "Retap Beats", systemImage: "hand.tap")
@@ -307,7 +392,7 @@ struct EditorView: View {
 
     private func reextractNotes() {
         guard didInitializeNotes else { return }
-        player.stop()
+        stopTransport()
         let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
         notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
         pianoRollFitRequestID += 1
@@ -318,5 +403,92 @@ struct EditorView: View {
         didInitializeNotes = true
         let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
         notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
+    }
+
+    private func togglePlayback() {
+        if playbackMode == .withRecording {
+            if isTransportPlaying {
+                pauseOverlayPlayback()
+            } else {
+                playOverlay()
+            }
+            return
+        }
+
+        if player.isPlaying {
+            player.pause()
+        } else {
+            player.play(notes: notes)
+        }
+    }
+
+    private func stopTransport() {
+        player.stop()
+        if playbackMode == .withRecording {
+            player.prepare(notes: notes)
+        }
+    }
+
+    private func seekTransport(to time: Double) {
+        if playbackMode == .withRecording {
+            return
+        }
+
+        let clampedTime = max(time, 0)
+
+        player.seek(to: clampedTime)
+    }
+
+    private func playOverlay() {
+        guard prepareOverlayResources() else {
+            return
+        }
+        let gains = overlayGains
+        player.playOverlay(
+            notes: notes,
+            recordingGain: gains.recordingGain,
+            midiGain: gains.midiGain
+        )
+    }
+
+    private func pauseOverlayPlayback() {
+        player.pause()
+    }
+
+    private var overlayGains: (recordingGain: Float, midiGain: Float) {
+        let clamped = min(max(overlayMix, 0), 1)
+        return (Float(1 - clamped), Float(clamped))
+    }
+
+    private func scheduleOverlayMixUpdate() {
+        guard playbackMode == .withRecording else { return }
+
+        let gains = overlayGains
+        mixDebounceTask?.cancel()
+        mixDebounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            player.updateOverlayMix(
+                recordingGain: gains.recordingGain,
+                midiGain: gains.midiGain
+            )
+        }
+    }
+
+    @discardableResult
+    private func prepareOverlayResources() -> Bool {
+        guard let recordingURL = audioRecorder.lastRecordingURL else {
+            audioRecorder.errorMessage = AudioRecorder.AudioRecorderError.missingRecording.localizedDescription
+            return false
+        }
+
+        do {
+            try player.loadRecordingForOverlay(url: recordingURL)
+            player.prepare(notes: notes)
+            return true
+        } catch {
+            audioRecorder.errorMessage = error.localizedDescription
+            return false
+        }
     }
 }

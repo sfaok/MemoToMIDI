@@ -18,7 +18,9 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var destinationFormat: AVAudioFormat?
     private var writtenFrameCount: Int64 = 0
     private var player: AVAudioPlayer?
+    private var playerURL: URL?
     private var playbackTimer: Timer?
+    private var playbackVolume: Float = 1.0
 
     func requestMicrophoneAccess() async -> Bool {
         switch AVAudioApplication.shared.recordPermission {
@@ -109,31 +111,34 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
 
     func playLastRecording() throws {
+        try playLastRecording(startTime: nil, startDelay: 0)
+    }
+
+    func playLastRecording(startTime: Double?, startDelay: TimeInterval = 0) throws {
         guard let url = lastRecordingURL else {
             throw AudioRecorderError.missingRecording
         }
 
         try configureSession()
 
-        let player: AVAudioPlayer
-        if let existingPlayer = self.player {
-            player = existingPlayer
-        } else {
-            let createdPlayer = try AVAudioPlayer(contentsOf: url)
-            createdPlayer.delegate = self
-            createdPlayer.prepareToPlay()
-            self.player = createdPlayer
-            player = createdPlayer
-            DispatchQueue.main.async {
-                self.playbackDuration = createdPlayer.duration
-            }
-        }
+        let player = try preparePlayer(for: url)
+        let seekTime = startTime ?? player.currentTime
+        let clampedStartTime = min(max(seekTime, 0), player.duration)
 
-        if player.currentTime >= player.duration {
+        if clampedStartTime >= player.duration {
             player.currentTime = 0
+        } else {
+            player.currentTime = clampedStartTime
         }
 
-        guard player.play() else {
+        let didStart: Bool
+        if startDelay > 0 {
+            didStart = player.play(atTime: player.deviceCurrentTime + startDelay)
+        } else {
+            didStart = player.play()
+        }
+
+        guard didStart else {
             throw AudioRecorderError.playbackFailed
         }
 
@@ -154,6 +159,29 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
         }
     }
 
+    func seekPlayback(to time: Double) {
+        guard let url = lastRecordingURL else { return }
+
+        do {
+            let player = try preparePlayer(for: url)
+            player.currentTime = min(max(time, 0), player.duration)
+            DispatchQueue.main.async {
+                self.currentPlaybackTime = player.currentTime
+                self.playbackDuration = player.duration
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func setPlaybackVolume(_ volume: Float) {
+        let clamped = min(max(volume, 0), 1)
+        playbackVolume = clamped
+        player?.volume = clamped
+    }
+
     func stopPlayback() {
         stopPlaybackTimer()
 
@@ -169,6 +197,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
         player.stop()
         player.currentTime = 0
         self.player = nil
+        self.playerURL = nil
         DispatchQueue.main.async {
             self.isPlaying = false
             self.currentPlaybackTime = 0
@@ -209,9 +238,34 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioPlayerDelegate {
 
     private func configureSession() throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+        try session.setCategory(
+            .playAndRecord,
+            mode: .default,
+            options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+        )
         try session.setPreferredSampleRate(AudioConstants.sampleRate)
         try session.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    private func preparePlayer(for url: URL) throws -> AVAudioPlayer {
+        if let existingPlayer = player, playerURL == url {
+            existingPlayer.volume = playbackVolume
+            return existingPlayer
+        }
+
+        let createdPlayer = try AVAudioPlayer(contentsOf: url)
+        createdPlayer.delegate = self
+        createdPlayer.volume = playbackVolume
+        createdPlayer.prepareToPlay()
+
+        player = createdPlayer
+        playerURL = url
+
+        DispatchQueue.main.async {
+            self.playbackDuration = createdPlayer.duration
+        }
+
+        return createdPlayer
     }
 
     private func startPlaybackTimer() {
