@@ -1,8 +1,8 @@
 # PROJECT_STATE
 
-Generated: 2026-02-20
+Generated: 2026-02-21
 Scope: `MemoToMIDI.xcodeproj` target sources under `MemoToMIDI/`
-Build check: `xcodebuild ... build CODE_SIGNING_ALLOWED=NO` on iOS Simulator completed with `BUILD SUCCEEDED`.
+Build check: `xcodebuild -project MemoToMIDI/MemoToMIDI.xcodeproj -scheme MemoToMIDI -configuration Debug -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO` completed with `BUILD SUCCEEDED`.
 
 ## 1. FILE INVENTORY
 
@@ -10,19 +10,19 @@ Build check: `xcodebuild ... build CODE_SIGNING_ALLOWED=NO` on iOS Simulator com
 | File | Lines | Description | Status |
 |---|---:|---|---|
 | `Audio/AudioFileReader.swift` | 92 | Reads WAV files, converts/resamples to mono Float32 buffers, and reports file metadata. | COMPLETE |
-| `Audio/AudioRecorder.swift` | 289 | Handles mic permission, recording to 22050 Hz mono WAV via `AVAudioEngine` + `AVAudioConverter`, playback, and live waveform levels. | COMPLETE |
+| `Audio/AudioRecorder.swift` | 408 | Handles mic permission, recording to 22050 Hz mono WAV via `AVAudioEngine` + `AVAudioConverter`, playback, and waveform/playback timing state. | COMPLETE |
 
 ### MIDI
 | File | Lines | Description | Status |
 |---|---:|---|---|
 | `MIDI/MIDIExporter.swift` | 137 | Writes MIDI data to temp file and presents share sheet via `UIActivityViewController`. | COMPLETE |
 | `MIDI/MIDIFileWriter.swift` | 181 | Encodes SMF Type 0 MIDI with one tempo meta event and note on/off events using VLQ delta times. | COMPLETE |
-| `MIDI/MIDIPlayer.swift` | 401 | Provides note-preview playback using `AVAudioEngine` + `AVAudioUnitSampler` with transport controls and seeking. | COMPLETE |
+| `MIDI/MIDIPlayer.swift` | 1148 | Provides MIDI-only preview and overlay playback, preset/soundfont loading, offline MIDI render, and pre-mixed single-buffer transport. | COMPLETE |
 
 ### ML
 | File | Lines | Description | Status |
 |---|---:|---|---|
-| `ML/BasicPitchInference.swift` | 270 | Runs windowed CoreML Basic Pitch inference, stitches overlap-trimmed outputs, and returns full note/onset activation matrices. | COMPLETE |
+| `ML/BasicPitchInference.swift` | 278 | Runs windowed CoreML Basic Pitch inference, stitches overlap-trimmed outputs, and removes prepend-alignment frames before extraction. | COMPLETE |
 
 ### App Entry
 | File | Lines | Description | Status |
@@ -33,13 +33,14 @@ Build check: `xcodebuild ... build CODE_SIGNING_ALLOWED=NO` on iOS Simulator com
 ### Models
 | File | Lines | Description | Status |
 |---|---:|---|---|
+| `Models/BeatMap.swift` | 71 | Stores tapped beat positions and derives BPM from median inter-tap intervals. | COMPLETE |
 | `Models/Constants.swift` | 27 | Defines validated audio/model window constants and default MIDI/extraction constants. | COMPLETE |
 | `Models/NoteEvent.swift` | 17 | Core note model (`pitch`, `startTime`, `duration`, `velocity`) used across extraction, UI, and MIDI export. | COMPLETE |
 
 ### Processing
 | File | Lines | Description | Status |
 |---|---:|---|---|
-| `Processing/NoteExtractor.swift` | 179 | Converts note/onset activations into `NoteEvent` objects with thresholds, min length, merging, and velocity mapping. | COMPLETE |
+| `Processing/NoteExtractor.swift` | 189 | Converts note/onset activations into `NoteEvent` objects with thresholds, min length, merging, and curved velocity mapping. | COMPLETE |
 | `Processing/PitchCorrector.swift` | 64 | Applies fractional pitch-bin tuning correction to activation matrices. | COMPLETE |
 | `Processing/TransientRefiner.swift` | 129 | Refines note start times by snapping note clusters to nearby transient peaks in raw audio. | COMPLETE |
 | `Processing/TuningDetector.swift` | 104 | Estimates cents offset and confidence from activation peak interpolation. | COMPLETE |
@@ -47,36 +48,43 @@ Build check: `xcodebuild ... build CODE_SIGNING_ALLOWED=NO` on iOS Simulator com
 ### Views
 | File | Lines | Description | Status |
 |---|---:|---|---|
-| `Views/EditorView.swift` | 225 | Note-edit screen with piano roll, preview playback, cleanup sliders, and MIDI export. | COMPLETE |
+| `Views/EditorView.swift` | 494 | Note-edit screen with piano roll, cleanup sliders, MIDI/overlay playback controls, beat tapping, and MIDI export. | COMPLETE |
 | `Views/PianoRollView.swift` | 506 | Canvas-based piano roll with zoom, scrolling, selection, deletion, and playback scrubber/seek. | COMPLETE |
-| `Views/RecordingView.swift` | 444 | Main workflow UI for record/stop/play, auto-inference after stop, caching, extraction, and navigation to editor. | COMPLETE |
+| `Views/RecordingView.swift` | 445 | Main workflow UI for record/stop/play, auto-inference after stop, caching, extraction, and navigation to editor. | COMPLETE |
 | `Views/WaveformView.swift` | 51 | Lightweight bar waveform visualization of recent recording levels. | COMPLETE |
 
 ### Views/Components
 | File | Lines | Description | Status |
 |---|---:|---|---|
+| `Views/Components/BeatTapView.swift` | 236 | Tap-along UI that captures beat positions during playback and returns `BeatMap`. | COMPLETE |
 | `Views/Components/CleanupSlidersView.swift` | 133 | Expandable sliders for extraction sensitivity, min note length, merge gap, and sustain threshold. | COMPLETE |
+
+Inventory changes since previous snapshot:
+- Added inventory entries for `Models/BeatMap.swift` and `Views/Components/BeatTapView.swift`.
+- Updated significant line-count growth in `MIDI/MIDIPlayer.swift`, `Views/EditorView.swift`, `Audio/AudioRecorder.swift`, `ML/BasicPitchInference.swift`, and `Processing/NoteExtractor.swift`.
+- Current Swift target total: 4,748 lines.
 
 ## 2. IMPLEMENTED FEATURES
 
 | Feature | Status | Note |
 |---|---|---|
 | Audio recording at 22050 Hz mono | YES | `AudioRecorder` converts input to 22050 Hz mono Float32 before writing WAV. |
-| Audio playback | YES | `AudioRecorder.playLastRecording()` uses `AVAudioPlayer`. |
-| CoreML Basic Pitch inference (windowed + stitched) | YES | `BasicPitchInference.process()` windows, predicts per window, trims overlap halves, concatenates, and trims final frame count. |
+| Audio playback | YES | `AudioRecorder.playLastRecording()` provides transport with current-time tracking. |
+| CoreML Basic Pitch inference (windowed + stitched) | YES | `BasicPitchInference.process()` windows, predicts per window, trims overlap halves, concatenates, then trims to expected frame count. |
 | Tuning detection | YES | `TuningDetector.detect(from:)` implemented and used after inference. |
 | Pitch correction | YES | `PitchCorrector.correct(result:centsOffset:)` applied before extraction. |
 | Note extraction with adjustable thresholds | YES | `NoteExtractor` supports onset/frame thresholds, min length, merge gap; sliders drive re-extraction in `EditorView`. |
+| Velocity curve mapping | YES | Power curve with activation range normalization (0.25-0.95), exponent 0.75, velocity floor 30. |
 | Transient timing refinement | YES | `TransientRefiner.refine(...)` runs after extraction. |
 | MIDI file export (SMF Type 0) | YES | `MIDIFileWriter.write(notes:bpm:)` encodes valid Type 0 data with tempo + note events. |
 | Share sheet / file export UI | YES | `MIDIExportShareButton` writes temp `.mid` then presents `UIActivityViewController`. |
 | Piano roll display | YES | `PianoRollView` uses SwiftUI `Canvas` for rendering notes/grid/scrubber. |
-| MIDI preview playback (AVAudioUnitSampler) | YES | `MIDIPlayer` schedules note start/stop events on sampler. |
+| MIDI preview playback (AVAudioUnitSampler) | YES | SoundFont-backed sampler playback with preset options (Piano, Clean Guitar, Marimba/Sine slot) and program fallback when SoundFont loading fails. |
+| Overlay playback | YES | Pre-mixed single-buffer approach, recording + MIDI sampler. |
+| Beat tap mapping | YES | Tap along during playback, median BPM derivation, beat positions stored in `BeatMap`. |
 | Cleanup sliders (sensitivity, min note length, merge distance) | YES | `CleanupSlidersView` exposes onset threshold, min length, and merge gap controls. |
-| Transient refinement toggle | NO | Refinement is always applied in `EditorView`; no UI toggle/state for OFF/ON. |
-| Flash tempo / visual metronome | NO | No `FlashTempoView` or equivalent UI in target. |
-| Tap tempo | NO | No tap-tempo control implemented. |
-| Auto BPM detection | NO | No `TempoDetector` in target sources. |
+| Flash tempo / visual metronome | NO | No dedicated flash-tempo component in target. |
+| Auto BPM detection | NO | No automatic tempo detector in target sources; BPM is manual or tap-derived. |
 | Soft quantization | NO | No `Quantizer` in target sources. |
 | Recording library / persistence | NO | No `RecordingStore` / recording list model/view in target sources. |
 | Waveform display | YES | `WaveformView` renders live downsampled waveform bars. |
@@ -86,37 +94,33 @@ Build check: `xcodebuild ... build CODE_SIGNING_ALLOWED=NO` on iOS Simulator com
 Actual path from “user taps record” to “MIDI file exported”:
 
 1. `MemoToMIDI/ContentView.swift` -> `RecordingView()` is shown.
-2. User taps **Record** in `RecordingView` -> `handleRecordButton()` (`Views/RecordingView.swift`) -> `audioRecorder.startRecording()` (`Audio/AudioRecorder.swift`).
-3. `AudioRecorder.startRecording()` configures session, installs input tap, converts incoming buffers in `handleInputBuffer(_:)`, and writes 22050 Hz mono WAV.
-4. User taps **Stop** -> `handleRecordButton()` calls `audioRecorder.stopRecording()`.
-5. `RecordingView.onChange(of: audioRecorder.isRecording)` detects `true -> false`, calls `refreshLastFileDescription()`, increments `processingRequestID`.
-6. `.task(id: processingRequestID)` triggers `runInferenceForLastRecording()` (`Views/RecordingView.swift`).
-7. `runInferenceForLastRecording()` reads samples with `AudioFileReader.readSamples(from:)` -> `readMonoFloat32(...)` (`Audio/AudioFileReader.swift`).
-8. `runInferenceForLastRecording()` calls `inferenceEngine.process(audioSamples:progressCallback:)` (`ML/BasicPitchInference.swift`).
-9. `BasicPitchInference.processSync(...)` runs: `warmUpSync()` -> `loadModelIfNeeded()` -> per-window `predictWindow(...)` -> overlap trim + concatenate -> final frame trim -> returns `InferenceResult`.
-10. `RecordingView` caches outputs in state: `cachedInferenceResult`, `cachedAudioBuffer`, `lastProcessedRecordingURL`.
-11. Processing chain then runs from cached inference output: `TuningDetector.detect(from:)` -> `PitchCorrector.correct(...)` -> `NoteExtractor.extract(...)` -> `TransientRefiner.refine(...)` -> `extractedNotes`.
-12. User opens editor via `NavigationLink` to `EditorView(inferenceResult:tuningResult:audioBuffer:)`.
-13. `EditorView.init(...)` computes and stores `correctedResult` once from passed cached inference output.
-14. `EditorView.initializeNotesIfNeeded()` and `reextractNotes()` run `NoteExtractor.extract(from:correctedResult, parameters:...)` + `TransientRefiner.refine(...)`.
-15. User taps **Export MIDI** (`MIDIExportShareButton`) -> `exportAndShare()` (`MIDI/MIDIExporter.swift`).
-16. `exportAndShare()` -> `MIDIExporter.exportToFile(notes:bpm:)` -> `MIDIFileWriter.write(notes:bpm:)` (`MIDI/MIDIFileWriter.swift`) -> `.mid` temp file written -> `MIDIShareSheet` presented.
+2. User records in `RecordingView` via `AudioRecorder.startRecording()` / `stopRecording()`.
+3. `RecordingView` launches `BasicPitchInference.process(audioSamples:progressCallback:)` after stop.
+4. `BasicPitchInference` windows audio, runs CoreML, stitches overlap-trimmed outputs, and removes prepend frames so frame 0 aligns to recording start.
+5. `RecordingView` caches `InferenceResult` and raw audio buffer.
+6. Processing chain runs from cached ML output only: `TuningDetector` -> `PitchCorrector` -> `NoteExtractor` -> `TransientRefiner`.
+7. `EditorView` re-extracts from cached corrected matrices when cleanup sliders change (no re-inference).
+8. Playback options:
+   - MIDI-only preview through `MIDIPlayer` sampler.
+   - Overlay playback via offline rendered MIDI + recording mix into one buffer.
+9. Tempo mapping options in `EditorView`:
+   - Manual BPM entry.
+   - Beat tapping (`BeatTapView`) persisted into `BeatMap` and exported using median-derived BPM.
+10. Export path: `MIDIExportShareButton` -> `MIDIExporter.exportToFile(notes:bpm:)` -> `MIDIFileWriter.write(notes:bpm:)` -> share sheet.
 
 Cache behavior vs recomputation:
 
-- Inference caching: `RecordingView` skips re-inference when `lastProcessedRecordingURL == url && cachedInferenceResult != nil` (`Views/RecordingView.swift:299`).
-- Slider edits: `EditorView` re-runs extraction/refinement from cached `correctedResult` + `audioBuffer`; it does not call `BasicPitchInference` (`Views/EditorView.swift:211`, `Views/EditorView.swift:214`).
-- Export: uses current `notes` only; no re-extraction and no re-inference during export (`MIDI/MIDIExporter.swift:21`).
+- Inference caching: `RecordingView` skips re-inference when the last processed recording URL matches and cached inference exists.
+- Slider edits / tuning changes: extraction and refinement rerun from cached matrices only.
+- Export: writes from current note list + chosen BPM; no re-inference.
 
 ## 4. KNOWN ISSUES
 
-- No explicit TODO/FIXME/XXX/HACK markers were found in Swift source.
-- Deployment target is iOS 17.2, not 17.0 as required by project constraints (`MemoToMIDI/MemoToMIDI.xcodeproj/project.pbxproj:362`, `MemoToMIDI/MemoToMIDI.xcodeproj/project.pbxproj:419`).
-- Transient refinement is always on; there is no OFF/ON toggle (`MemoToMIDI/Views/EditorView.swift:215`, `MemoToMIDI/Views/EditorView.swift:223`).
-- Tempo is fixed to default 120 BPM in export buttons; no tap tempo/auto-BPM/tempo control integration (`MemoToMIDI/Views/RecordingView.swift:114`, `MemoToMIDI/Views/EditorView.swift:114`).
-- Analysis and storage feature areas are not implemented in target (groups exist but contain no files), so flash tempo, BPM detection, quantization, and persistence/library are absent (`MemoToMIDI/MemoToMIDI.xcodeproj/project.pbxproj:165`, `MemoToMIDI/MemoToMIDI.xcodeproj/project.pbxproj:172`).
-- `PHASE-STATUS.md` is stale and contradicts current code (lists Phase 3/4/5 as not started even though related files compile and run) (`MemoToMIDI/PHASE-STATUS.md:72`, `MemoToMIDI/PHASE-STATUS.md:94`, `MemoToMIDI/PHASE-STATUS.md:106`).
-- Verbose debug logging remains in runtime paths, which can flood console during normal usage (`MemoToMIDI/Views/RecordingView.swift:338`, `MemoToMIDI/Views/RecordingView.swift:391`, `MemoToMIDI/Processing/TransientRefiner.swift:57`).
+- Deployment target remains iOS 17.2 in project settings (`MemoToMIDI/MemoToMIDI.xcodeproj/project.pbxproj`), while product constraints call for iOS 17.0.
+- Transient refinement is always applied in `EditorView`; no OFF/ON toggle is exposed.
+- Verbose debug logging remains in hot runtime paths (`RecordingView`, `MIDIPlayer`, `TransientRefiner`) and can flood console output.
+- `PHASE-STATUS.md` is stale relative to implemented Phase 3-5+ code.
+- Prepend offset (~174ms) was being applied to note times - FIXED. Subtracted in inference pipeline.
 
 ## 5. DEPENDENCIES CHECK
 

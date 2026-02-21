@@ -394,7 +394,8 @@ struct EditorView: View {
         guard didInitializeNotes else { return }
         stopTransport()
         let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
-        notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
+        let refined = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
+        notes = NoteExtractor.applyAudioVelocity(notes: refined, audioBuffer: audioBuffer)
         pianoRollFitRequestID += 1
     }
 
@@ -402,7 +403,8 @@ struct EditorView: View {
         guard !didInitializeNotes else { return }
         didInitializeNotes = true
         let extracted = NoteExtractor.extract(from: correctedResult, parameters: parameters)
-        notes = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
+        let refined = TransientRefiner.refine(notes: extracted, audioBuffer: audioBuffer)
+        notes = NoteExtractor.applyAudioVelocity(notes: refined, audioBuffer: audioBuffer)
     }
 
     private func togglePlayback() {

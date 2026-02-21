@@ -160,9 +160,91 @@ struct NoteExtractor {
         return events
     }
 
+    /// Replaces velocity values with audio-energy-derived values.
+    /// Measures peak amplitude in a short window around each note's
+    /// startTime in the raw audio buffer.
+    static func applyAudioVelocity(
+        notes: [NoteEvent],
+        audioBuffer: [Float],
+        sampleRate: Double = AudioConstants.sampleRate
+    ) -> [NoteEvent] {
+        guard !notes.isEmpty, !audioBuffer.isEmpty, sampleRate > 0 else { return notes }
+
+        let windowSize = 110
+        var peaks: [Float] = []
+        peaks.reserveCapacity(notes.count)
+
+        for note in notes {
+            let onsetSample = Int(note.startTime * sampleRate)
+            let preStart = max(0, onsetSample - windowSize)
+            let preEnd = min(onsetSample, audioBuffer.count)
+            let postStart = max(0, min(onsetSample, audioBuffer.count))
+            let postEnd = min(audioBuffer.count, onsetSample + windowSize)
+
+            var prePeak: Float = 0
+            if preStart < preEnd {
+                for sampleIndex in preStart..<preEnd {
+                    let absolute = abs(audioBuffer[sampleIndex])
+                    if absolute > prePeak {
+                        prePeak = absolute
+                    }
+                }
+            }
+
+            var postPeak: Float = 0
+            if postStart < postEnd {
+                for sampleIndex in postStart..<postEnd {
+                    let absolute = abs(audioBuffer[sampleIndex])
+                    if absolute > postPeak {
+                        postPeak = absolute
+                    }
+                }
+            }
+
+            let attackEnergy = max(0, postPeak - prePeak)
+            peaks.append(attackEnergy)
+        }
+
+        guard let loudestPeak = peaks.max(), let softestPeak = peaks.min() else { return notes }
+
+        if loudestPeak == softestPeak {
+            return notes.map { note in
+                var updated = note
+                updated.velocity = 90
+                return updated
+            }
+        }
+
+        let dynamicRange = loudestPeak - softestPeak
+        var updatedNotes: [NoteEvent] = []
+        updatedNotes.reserveCapacity(notes.count)
+
+        for (index, note) in notes.enumerated() {
+            let normalized = (peaks[index] - softestPeak) / dynamicRange
+            let curved = powf(normalized, 0.6)
+            let velocity = 35 + curved * 92
+
+            var updated = note
+            updated.velocity = UInt8(max(1, min(127, Int(velocity.rounded()))))
+            updatedNotes.append(updated)
+        }
+
+        return updatedNotes
+    }
+
     private static func velocityFromPeakActivation(_ peakActivation: Float) -> UInt8 {
-        let scaled = Int(peakActivation.clamped(to: 0...1) * 127.0)
-        return UInt8(max(1, min(127, scaled)))
+        let activationFloor: Float = 0.25
+        let activationCeil: Float = 0.95
+        let normalized = (peakActivation.clamped(to: activationFloor...activationCeil) - activationFloor)
+            / (activationCeil - activationFloor)
+
+        let curved = powf(normalized, 0.75)
+
+        let minVelocity: Float = 30
+        let maxVelocity: Float = 127
+        let velocity = minVelocity + curved * (maxVelocity - minVelocity)
+
+        return UInt8(max(1, min(127, Int(velocity))))
     }
 }
 

@@ -324,8 +324,9 @@ struct RecordingView: View {
             let tuning = TuningDetector.detect(from: result)
             let corrected = PitchCorrector.correct(result: result, centsOffset: tuning.centsOffset)
             let extracted = NoteExtractor.extract(from: corrected)
+            let refined = TransientRefiner.refine(notes: extracted, audioBuffer: audioSamples)
             tuningResult = tuning
-            extractedNotes = TransientRefiner.refine(notes: extracted, audioBuffer: audioSamples)
+            extractedNotes = NoteExtractor.applyAudioVelocity(notes: refined, audioBuffer: audioSamples)
             lastInferenceDuration = elapsed
             lastProcessedRecordingURL = url
             printValidationSummary(result: result, elapsed: elapsed)
